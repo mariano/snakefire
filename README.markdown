@@ -98,7 +98,6 @@ explicitly install it, follow these instructions:
    Sakefire:
 
 		$ mkdir -p ~/.kde/share/apps/Snakefire
-		$ cp *.png ~/.kde/share/apps/Snakefire
 		$ cp *.notifyrc ~/.kde/share/apps/Snakefire
 		$ killall knotify4
 
