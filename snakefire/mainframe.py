@@ -1,6 +1,7 @@
 import copy
 import datetime
 import os
+import re
 import sys
 
 KDE_ENABLED = os.getenv("KDE_FULL_SESSION")
@@ -32,8 +33,8 @@ class Snakefire(object):
 	COLORS = {
 		"time": "c0c0c0",
 		"alert": "ff0000",
-		"join": "c0c0c0",
-		"leave": "c0c0c0",
+		"join": "cb81cb",
+		"leave": "cb81cb",
 		"topic": "808080",
 		"upload": "000000",
 		"message": "000000",
@@ -322,11 +323,11 @@ class Snakefire(object):
 		html = None
 		if message.is_joining():
 			html = "<font color=\"#%s\">" % self.COLORS["join"]
-			html += "%s joined" % user
+			html += "--&gt; %s joined %s" % (user, room.name)
 			html += "</font>"
 		elif message.is_leaving():
 			html = "<font color=\"#%s\">" % self.COLORS["leave"]
-			html += "%s left" % user
+			html += "&lt;-- %s has left %s" % (user, room.name)
 			html += "</font>"
 		elif message.is_text():
 			body = self._plainTextToHTML(message.tweet["tweet"] if message.is_tweet() else message.body)
@@ -340,7 +341,7 @@ class Snakefire(object):
 			elif message.is_paste():
 				body = "<br /><hr /><code>%s</code><hr />" % body
 			else:
-				body = body
+				body = self._autoLink(body)
 
 			created = QtCore.QDateTime(
 				message.created_at.year,
@@ -791,6 +792,27 @@ class Snakefire(object):
 
 	def _plainTextToHTML(self, string):
 		return string.replace("<", "&lt;").replace(">", "&gt;").replace("\n", "<br />")
+
+	def _autoLink(self, string):
+		urlre = re.compile("(\(?https?://[-A-Za-z0-9+&@#/%?=~_()|!:,.;]*[-A-Za-z0-9+&@#/%=~_()|])(\">|</a>)?")
+		urls = urlre.findall(string)
+		cleanUrls = []
+		for url in urls:
+			if url[1]:
+				continue
+
+			currentUrl = url[0]
+			if currentUrl[0] == '(' and currentUrl[-1] == ')':
+				currentUrl = currentUrl[1:-1]
+
+			if currentUrl in cleanUrls:
+				continue
+
+			cleanUrls.append(currentUrl)
+			string = re.sub("(?<!(=\"|\">))" + re.escape(currentUrl),
+							"<a href=\"" + currentUrl + "\">" + currentUrl + "</a>",
+							string)
+		return string
 
 class QSnakefire(QtGui.QMainWindow, Snakefire):
 	def __init__(self, parent=None):
