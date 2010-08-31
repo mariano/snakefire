@@ -90,7 +90,7 @@ explicitly install it, follow these instructions:
    You can keep up with the latest updates by accessing the directory where
    you installed Sakefire, and running:
 
-		$ git pull --rebase && git submodule update --rebase
+		$ git pull --rebase
 
 2. If you are on *KDE*, install the notify configuration to your home directory
    by running the following commands from the directory where you installed
