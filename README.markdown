@@ -75,8 +75,7 @@ After all the required packages have been installed, you can install
 Snakefire by:
 
 1. Uncompressing the snakefire package file.
-2. Unzip the downloaded file, and run the following command from within the 
-created directory:
+2. Running the following command from within the created directory:
 
 		$ python setup.py install
 
