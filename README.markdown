@@ -10,7 +10,7 @@ Pyfire is released under the [MIT License] [license].
 
 ### PyQT4 ###
 
-The python library for QT integration is required.
+The python library for QT is required.
 
 For *Ubuntu based* systems, PyQT4 is in the official repositories, and can be
 installed the following way:
@@ -20,6 +20,8 @@ installed the following way:
 For *Arch Linux*, PyQT4 is in the extra repository, and can be installed with:
 
 		$ pacman -S pyqt
+
+Other OS should refer to the [PyQT4 download page] [pyqt-download]
 
 #### Keyring ####
 
@@ -107,6 +109,7 @@ Snakefire, and do:
 		$ python snakefire.py
 
 [license]: http://www.opensource.org/licenses/mit-license.php
+[pyqt-download]: http://www.riverbankcomputing.co.uk/software/pyqt/download
 [pyfire-readme]: http://github.com/mariano/pyfire#readme
 [yaourt]: http://wiki.archlinux.org/index.php/Yaourt
 [keyring-install]: http://pypi.python.org/pypi/keyring/#installation-instructions
