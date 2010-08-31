@@ -1,0 +1,3 @@
+[submodule "snakefire/pyfire"]
+	path = snakefire/pyfire
+	url = git://github.com/mariano/pyfire.git

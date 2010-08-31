@@ -1,0 +1,8 @@
+[Global]
+Comment=Snakefire
+
+[Event/FilterAlert]
+Name=Filter Alert
+Comment=A filter match was found in a message
+Sound=KDE-Im-Message-In.ogg
+Action=Sound|Popup|Taskbar
