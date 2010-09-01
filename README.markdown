@@ -44,6 +44,17 @@ you can install it with (if you don't have yaourt, you should really
 
 Other OS should read [Python Keyring installation docs] [keyring-install].
 
+#### PyOpenSSL ####
+
+For *Ubuntu based* systems, PyOpenSSL is in the official repositories, and can be
+installed the following way:
+
+		$ sudo apt-get install python-openssl
+
+For *Arch Linux*, PyOpenSSL is in the extra repository, and can be installed with:
+
+		$ pacman -S pyopenssl
+
 #### Twisted ####
 
 For *Ubuntu based* systems, Twisted is in the official repositories, and can be
@@ -87,6 +98,8 @@ explicitly install it, follow these instructions:
 1. Get the latest development version by cloning from its GIT repository:
 
 		$ git clone git://github.com/mariano/snakefire
+		$ git submodule init
+		$ git submodule update
 
    You can keep up with the latest updates by accessing the directory where
    you installed Sakefire, and running:
