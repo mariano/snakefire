@@ -55,6 +55,8 @@ For *Arch Linux*, PyOpenSSL is in the extra repository, and can be installed wit
 
 		$ pacman -S pyopenssl
 
+Other OS should read [PyOpenSSL download page] [pyopenssl-download].
+
 #### Twisted ####
 
 For *Ubuntu based* systems, Twisted is in the official repositories, and can be
@@ -124,5 +126,6 @@ Snakefire, and do:
 [pyfire-readme]: http://github.com/mariano/pyfire#readme
 [yaourt]: http://wiki.archlinux.org/index.php/Yaourt
 [keyring-install]: http://pypi.python.org/pypi/keyring/#installation-instructions
+[pyopenssl-download]: http://pypi.python.org/pypi/pyOpenSSL
 [twisted]: http://twistedmatrix.com
 [twisted-download]: http://twistedmatrix.com/trac/wiki/Downloads
