@@ -100,6 +100,7 @@ explicitly install it, follow these instructions:
 1. Get the latest development version by cloning from its GIT repository:
 
 		$ git clone git://github.com/mariano/snakefire
+		$ cd snakefire
 		$ git submodule init
 		$ git submodule update
 
