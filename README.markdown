@@ -84,9 +84,6 @@ shows how to install Twisted on several platforms.
 
 ### Installing Snakefire ###
 
-**IMPORTANT**: The setup.py based installation **is not yet ready**. To install
-Snakefire, refer to the *Running the developer version* section below.
-
 #### Running the developer version ####
 
 If you wish to run the latest version of Snakefire, without having to
