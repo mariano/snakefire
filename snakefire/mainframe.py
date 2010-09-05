@@ -17,12 +17,11 @@ if KDE_ENABLED:
 import keyring
 
 from campfireworker import CampfireWorker
-from dialogs import OptionsDialog
+from dialogs import AlertsDialog, OptionsDialog
 from qtx import Suggester, ClickableQLabel, SuggesterKeyPressEventFilter
 from systray import Systray
 
-def _(string, module=None):
-	return str(QtCore.QCoreApplication.translate(module or Snakefire.NAME, string))
+import snakefire_rc
 
 class Snakefire(object):
 	DOMAIN = "snakefire.org"
@@ -44,13 +43,13 @@ class Snakefire(object):
 	}
 
 	def __init__(self):
-		self.DESCRIPTION = _(self.DESCRIPTION)
+		self.DESCRIPTION = self._(self.DESCRIPTION)
 		self._worker = None
 		self._settings = {}
 		self._canConnect = False
 		self._cfDisconnected()
 		self._qsettings = QtCore.QSettings()
-		self._icon = QtGui.QIcon("icons/%s" % (self.ICON))
+		self._icon = QtGui.QIcon(":/icons/%s" % (self.ICON))
 		self.setWindowIcon(self._icon)
 		self.setAcceptDrops(True)
 		self._setupUI()
@@ -66,8 +65,8 @@ class Snakefire(object):
 		if settings["connect"]:
 			self.connectNow()
 
-	def _(self, string):
-		return _(string, self.NAME)
+	def _(self, string, module=None):
+		return str(QtCore.QCoreApplication.translate(module or Snakefire.NAME, string))
 
 	def showEvent(self, event):
 		if self._trayIcon.isVisible():
@@ -203,6 +202,10 @@ class Snakefire(object):
 
 			event.accept()
 
+	def alerts(self):
+		dialog = AlertsDialog(self)
+		dialog.open()
+
 	def options(self):
 		dialog = OptionsDialog(self)
 		dialog.open()
@@ -212,7 +215,7 @@ class Snakefire(object):
 			return
 
 		self._connecting = True
-		self.statusBar().showMessage(_("Connecting with Campfire..."))
+		self.statusBar().showMessage(self._("Connecting with Campfire..."))
 		self._updateLayout()
 
 		settings = self.getSettings("connection")
@@ -222,7 +225,7 @@ class Snakefire(object):
 		self._worker.connect()
 
 	def disconnectNow(self):
-		self.statusBar().showMessage(_("Disconnecting from Campfire..."))
+		self.statusBar().showMessage(self._("Disconnecting from Campfire..."))
 		if self._worker and hasattr(self, "_rooms"):
 			# Using keys() since the dict could be changed (by _cfRoomLeft())
 			# while iterating on it
@@ -239,7 +242,7 @@ class Snakefire(object):
 			return
 
 		self._toolBar["join"].setEnabled(False)
-		self.statusBar().showMessage(_("Joining room %s...") % room["name"])
+		self.statusBar().showMessage(self._("Joining room %s...") % room["name"])
 
 		self._rooms[room["id"]] = {
 			"room": None,
@@ -258,7 +261,7 @@ class Snakefire(object):
 		if not room or message.trimmed().isEmpty():
 			return
 
-		self.statusBar().showMessage(_("Sending message to %s...") % room.name)
+		self.statusBar().showMessage(self._("Sending message to %s...") % room.name)
 		message = str(message)
 		self._getWorker().speak(room, message)
 		self._editor.document().clear()
@@ -268,7 +271,7 @@ class Snakefire(object):
 
 	def leaveRoom(self, roomId):
 		if roomId in self._rooms:
-			self.statusBar().showMessage(_("Leaving room %s...") % self._rooms[roomId]["room"].name)
+			self.statusBar().showMessage(self._("Leaving room %s...") % self._rooms[roomId]["room"].name)
 			self._getWorker().leave(self._rooms[roomId]["room"])
 
 	def changeTopic(self):
@@ -276,13 +279,13 @@ class Snakefire(object):
 		if not room:
 			return
 		topic, ok = QtGui.QInputDialog.getText(self,
-			_("Change topic"),
-			_("Enter new topic for room %s") % room.name,
+			self._("Change topic"),
+			self._("Enter new topic for room %s") % room.name,
 			QtGui.QLineEdit.Normal,
 			room.topic
 		)
 		if ok:
-			self.statusBar().showMessage(_("Changing topic for room %s...") % room.name)
+			self.statusBar().showMessage(self._("Changing topic for room %s...") % room.name)
 			self._getWorker().changeTopic(room, topic)
 
 	def updateRoomUsers(self, roomId = None):
@@ -291,7 +294,7 @@ class Snakefire(object):
 			if room:
 				roomId = room.id
 		if roomId in self._rooms:
-			self.statusBar().showMessage(_("Getting users in %s...") % self._rooms[roomId]["room"].name)
+			self.statusBar().showMessage(self._("Getting users in %s...") % self._rooms[roomId]["room"].name)
 			self._getWorker().users(self._rooms[roomId]["room"])
 
 	def updateRoomUploads(self, roomId = None):
@@ -300,7 +303,7 @@ class Snakefire(object):
 			if room:
 				roomId = room.id
 		if roomId in self._rooms:
-			self.statusBar().showMessage(_("Getting uploads in %s...") % self._rooms[roomId]["room"].name)
+			self.statusBar().showMessage(self._("Getting uploads in %s...") % self._rooms[roomId]["room"].name)
 			self._getWorker().uploads(self._rooms[roomId]["room"])
 
 	def getCurrentRoom(self):
@@ -444,7 +447,7 @@ class Snakefire(object):
 		for room in rooms:
 			self._toolBar["rooms"].addItem(room["name"], room)
 
-		self.statusBar().showMessage(_("%s connected to Campfire") % user.name, 5000)
+		self.statusBar().showMessage(self._("%s connected to Campfire") % user.name, 5000)
 		self._updateLayout()
 
 	def _cfDisconnected(self):
@@ -465,7 +468,7 @@ class Snakefire(object):
 		self._rooms[room.id]["stream"] = self._worker.getStream(room)
 		self.updateRoomUsers(room.id)
 		self.updateRoomUploads(room.id)
-		self.statusBar().showMessage(_("Joined room %s") % room.name, 5000)
+		self.statusBar().showMessage(self._("Joined room %s") % room.name, 5000)
 		self._updatedRoomsList()
 
 	def _cfSpoke(self, room, message):
@@ -477,7 +480,7 @@ class Snakefire(object):
 			self._rooms[room.id]["stream"].stop().join()
 		self._tabs.removeTab(self._rooms[room.id]["tab"])
 		del self._rooms[room.id]
-		self.statusBar().showMessage(_("Left room %s") % room.name, 5000)
+		self.statusBar().showMessage(self._("Left room %s") % room.name, 5000)
 		self._updatedRoomsList()
 
 	def _cfRoomUsers(self, room, users):
@@ -508,7 +511,7 @@ class Snakefire(object):
 					upload["name"]
 				)
 			html = "%s<br />%s" % (
-				_("Latest uploads:"),
+				self._("Latest uploads:"),
 				html
 			)
 
@@ -605,7 +608,7 @@ class Snakefire(object):
 		roomsEmpty = self._toolBar["rooms"].count() == 1 and self._toolBar["rooms"].itemData(0).isNull()
 		if not roomsEmpty and (not self._connected or not self._toolBar["rooms"].count()):
 			self._toolBar["rooms"].clear()
-			self._toolBar["rooms"].addItem(_("No rooms available"))
+			self._toolBar["rooms"].addItem(self._("No rooms available"))
 			self._toolBar["rooms"].setEnabled(False)
 		elif not roomsEmpty:
 			self._toolBar["rooms"].setEnabled(True)
@@ -615,14 +618,14 @@ class Snakefire(object):
 
 	def _setupRoomUI(self, room):
 		topicLabel = ClickableQLabel(room.topic)
-		topicLabel.setToolTip(_("Click here to change room's topic"))
+		topicLabel.setToolTip(self._("Click here to change room's topic"))
 		topicLabel.setWordWrap(True)
 		self.connect(topicLabel, QtCore.SIGNAL("clicked()"), self.changeTopic)
 
 		editor = QtGui.QTextBrowser()
 		editor.setOpenExternalLinks(True)
 
-		usersLabel = QtGui.QLabel(_("Users in room:"))
+		usersLabel = QtGui.QLabel(self._("Users in room:"))
 
 		usersList = QtGui.QListWidget()
 
@@ -631,7 +634,7 @@ class Snakefire(object):
 		filesLabel.setWordWrap(True)
 		filesLabel.hide()
 
-		uploadButton = QtGui.QPushButton(_("&Upload new file"))
+		uploadButton = QtGui.QPushButton(self._("&Upload new file"))
 		self.connect(uploadButton, QtCore.SIGNAL('clicked()'), self.uploadFile)
 
 		leftFrameLayout = QtGui.QVBoxLayout()
@@ -674,7 +677,7 @@ class Snakefire(object):
 		self._editor.setFixedHeight(self._editor.fontMetrics().height() * 2)
 		self._editor.installEventFilter(SuggesterKeyPressEventFilter(self, Suggester(self._editor)))
 
-		speakButton = QtGui.QPushButton(_("&Send"))
+		speakButton = QtGui.QPushButton(self._("&Send"))
 		self.connect(speakButton, QtCore.SIGNAL('clicked()'), self.speak)
 
 		grid = QtGui.QGridLayout()
@@ -718,42 +721,42 @@ class Snakefire(object):
 	def _addMenu(self):
 		self._menus = {
 			"file": {
-				"connect": self._createAction(_("&Connect"), self.connectNow, icon="connect.png"),
-				"disconnect": self._createAction(_("&Disconnect"), self.disconnectNow, icon="disconnect.png"),
-				"exit": self._createAction(_("E&xit"), self.exit)
+				"connect": self._createAction(self._("&Connect"), self.connectNow, icon="connect.png"),
+				"disconnect": self._createAction(self._("&Disconnect"), self.disconnectNow, icon="disconnect.png"),
+				"exit": self._createAction(self._("E&xit"), self.exit)
 			},
 			"settings": {
-				"alerts": self._createAction(_("&Alerts..."), icon="alerts.png"),
-				"options": self._createAction(_("&Options..."), self.options)
+				"alerts": self._createAction(self._("&Alerts..."), self.alerts, icon="alerts.png"),
+				"options": self._createAction(self._("&Options..."), self.options)
 			},
 			"help": {
-				"about": self._createAction(_("A&bout"))
+				"about": self._createAction(self._("A&bout"))
 			}
 		}
 
 		menu = self.menuBar()
 
-		file_menu = menu.addMenu(_("&File"))
+		file_menu = menu.addMenu(self._("&File"))
 		file_menu.addAction(self._menus["file"]["connect"])
 		file_menu.addAction(self._menus["file"]["disconnect"])
 		file_menu.addSeparator()
 		file_menu.addAction(self._menus["file"]["exit"])
 
-		settings_menu = menu.addMenu(_("S&ettings"))
+		settings_menu = menu.addMenu(self._("S&ettings"))
 		settings_menu.addAction(self._menus["settings"]["alerts"])
 		settings_menu.addSeparator()
 		settings_menu.addAction(self._menus["settings"]["options"])
 
-		help_menu = menu.addMenu(_("&Help"))
+		help_menu = menu.addMenu(self._("&Help"))
 		help_menu.addAction(self._menus["help"]["about"])
 
 	def _addToolbar(self):
 		self._toolBar = {
 			"connect": self._menus["file"]["connect"],
 			"disconnect": self._menus["file"]["disconnect"],
-			"roomsLabel": QtGui.QLabel(_("Rooms:")),
+			"roomsLabel": QtGui.QLabel(self._("Rooms:")),
 			"rooms": QtGui.QComboBox(),
-			"join": self._createAction(_("Join room"), self.joinRoom, icon="join.png"),
+			"join": self._createAction(self._("Join room"), self.joinRoom, icon="join.png"),
 			"alerts": self._menus["settings"]["alerts"]
 		}
 
@@ -776,7 +779,7 @@ class Snakefire(object):
 		action = QtGui.QAction(text, self) 
 		if icon is not None:
 			if not isinstance(icon, QtGui.QIcon):
-				action.setIcon(QtGui.QIcon("icons/%s" % (icon)))
+				action.setIcon(QtGui.QIcon(":/icons/%s" % (icon)))
 			else:
 				action.setIcon(icon)
 		if shortcut is not None: 

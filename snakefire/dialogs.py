@@ -1,6 +1,21 @@
 from PyQt4 import QtCore
 from PyQt4 import QtGui
 
+class AlertsDialog(QtGui.QDialog):
+	def __init__(self, mainFrame):
+		super(AlertsDialog, self).__init__(mainFrame)
+		self._mainFrame = mainFrame
+
+		self.setWindowTitle(self._mainFrame._("Alerts"))
+		self._setupUI()
+
+	def ok(self):
+		self._save()
+		self.close()
+
+	def cancel(self):
+		self.close()
+
 class OptionsDialog(QtGui.QDialog):
 	def __init__(self, mainFrame):
 		super(OptionsDialog, self).__init__(mainFrame)
