@@ -16,6 +16,9 @@ class AlertsDialog(QtGui.QDialog):
 	def cancel(self):
 		self.close()
 
+	def _setupUI(self):
+		pass
+
 class OptionsDialog(QtGui.QDialog):
 	def __init__(self, mainFrame):
 		super(OptionsDialog, self).__init__(mainFrame)

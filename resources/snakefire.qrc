@@ -1,0 +1,10 @@
+<!DOCTYPE RCC>
+<RCC version="1.0">
+<qresource prefix="/">
+	<file>icons/snakefire.png</file>
+	<file>icons/alerts.png</file>
+	<file>icons/connect.png</file>
+	<file>icons/disconnect.png</file>
+	<file>icons/join.png</file>
+</qresource>
+</RCC>
