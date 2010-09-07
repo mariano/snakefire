@@ -123,12 +123,11 @@ class CampfireWorker(QtCore.QThread):
 	def _streamError(self, e):
 		self.emit(QtCore.SIGNAL("error(PyQt_PyObject)"), e)
 
-	def _streamMessage(self, room, message, live=True, updateRoom=True):
-		self.emit(QtCore.SIGNAL("streamMessage(PyQt_PyObject, PyQt_PyObject, PyQt_PyObject, PyQt_PyObject)"), 
+	def _streamMessage(self, room, message, live=True):
+		self.emit(QtCore.SIGNAL("streamMessage(PyQt_PyObject, PyQt_PyObject, PyQt_PyObject)"), 
 			room,
 			message,
-			live,
-			updateRoom
+			live
 		)
 
 	def _users(self, room):

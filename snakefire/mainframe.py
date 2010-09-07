@@ -690,7 +690,7 @@ class Snakefire(object):
 		self.connect(worker, QtCore.SIGNAL("connectError(PyQt_PyObject)"), self._cfConnectError)
 		self.connect(worker, QtCore.SIGNAL("joined(PyQt_PyObject, PyQt_PyObject)"), self._cfRoomJoined)
 		self.connect(worker, QtCore.SIGNAL("spoke(PyQt_PyObject, PyQt_PyObject)"), self._cfSpoke)
-		self.connect(worker, QtCore.SIGNAL("streamMessage(PyQt_PyObject, PyQt_PyObject, PyQt_PyObject, PyQt_PyObject)"), self._cfStreamMessage)
+		self.connect(worker, QtCore.SIGNAL("streamMessage(PyQt_PyObject, PyQt_PyObject, PyQt_PyObject)"), self._cfStreamMessage)
 		self.connect(worker, QtCore.SIGNAL("left(PyQt_PyObject)"), self._cfRoomLeft)
 		self.connect(worker, QtCore.SIGNAL("users(PyQt_PyObject, PyQt_PyObject)"), self._cfRoomUsers)
 		self.connect(worker, QtCore.SIGNAL("uploads(PyQt_PyObject, PyQt_PyObject)"), self._cfRoomUploads)
