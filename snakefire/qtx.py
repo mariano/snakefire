@@ -88,3 +88,14 @@ class SuggesterKeyPressEventFilter(QtCore.QObject):
 						return False
 				return True
 		return False
+
+class TabWidgetFocusEventFilter(QtCore.QObject):
+	def __init__(self, mainFrame):
+		super(TabWidgetFocusEventFilter, self).__init__(mainFrame)
+		self._mainFrame = mainFrame
+
+	def eventFilter(self, widget, event):
+		if event.type() in [QtCore.QEvent.FocusIn, QtCore.QEvent.WindowActivate]:
+			self.emit(QtCore.SIGNAL("tabFocused()"))
+
+		return False

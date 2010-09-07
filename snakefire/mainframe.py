@@ -18,7 +18,7 @@ import keyring
 
 from campfireworker import CampfireWorker
 from dialogs import AlertsDialog, OptionsDialog
-from qtx import Suggester, ClickableQLabel, SuggesterKeyPressEventFilter
+from qtx import Suggester, ClickableQLabel, SuggesterKeyPressEventFilter, TabWidgetFocusEventFilter
 from systray import Systray
 
 import resources
@@ -39,7 +39,11 @@ class Snakefire(object):
 		"message": "000000",
 		"nick": "808080",
 		"nickAlert": "ff0000",
-		"nickSelf": "000080"
+		"nickSelf": "000080",
+		"tabs": {
+			"normal": None,
+			"alert": QtGui.QColor(255, 0, 0)
+		}
 	}
 
 	def __init__(self):
@@ -251,7 +255,8 @@ class Snakefire(object):
 			"editor": None,
 			"usersList": None,
 			"topicLabel": None,
-			"filesLabel": None
+			"filesLabel": None,
+			"newMessages": 0
 		}
 		self._getWorker().join(room["id"])
 
@@ -407,10 +412,22 @@ class Snakefire(object):
 			else:
 				scrollbar.setValue(currentScrollbarValue)
 
-			if alert and notify:
-				self._notify(room, message.body)
+			tabIndex = self._rooms[room.id]["tab"]
+			tabBar = self._tabs.tabBar()
+			isActiveTab = (self.isActiveWindow() and tabIndex == self._tabs.currentIndex())
+
+			if message.is_text() and not isActiveTab:
+				self._rooms[room.id]["newMessages"] += 1
+
+			if self._rooms[room.id]["newMessages"] > 0:
+				tabBar.setTabText(tabIndex, "%s (%s)" % (room.name, self._rooms[room.id]["newMessages"]))
+
 			if alert:
-				self._trayIcon.alert()
+				if not isActiveTab:
+					tabBar.setTabTextColor(tabIndex, self.COLORS["tabs"]["alert"])
+					self._trayIcon.alert()
+				if notify:
+					self._notify(room, message.body)
 
 		if (message.is_joining() or message.is_leaving()) and live:
 			self.updateRoomUsers(room.id)
@@ -547,6 +564,32 @@ class Snakefire(object):
 				self.leaveRoom(roomId)
 				break
 
+	def _roomTabFocused(self):
+		tabIndex = self._tabs.currentIndex()
+		if tabIndex < 0 or not self.isActiveWindow():
+			return
+
+		room = self._roomInTabIndex(tabIndex)
+		if not room:
+			return
+
+		tabBar = self._tabs.tabBar()
+
+		if self._rooms[room.id]["newMessages"] > 0:
+			self._rooms[room.id]["newMessages"] = 0
+			tabBar.setTabText(tabIndex, room.name)
+
+		if tabBar.tabTextColor(tabIndex) != self.COLORS["tabs"]["normal"]:
+			tabBar.setTabTextColor(tabIndex, self.COLORS["tabs"]["normal"])
+
+	def _roomInTabIndex(self, index):
+		room = None
+		for key in self._rooms:
+			if self._rooms[key]["tab"] == index:
+				room = self._rooms[key]["room"]
+				break
+		return room
+
 	def _roomInIndex(self, index):
 		room = {}
 		data = self._toolBar["rooms"].itemData(index)
@@ -661,6 +704,12 @@ class Snakefire(object):
 
 		index = self._tabs.addTab(splitter, room.name)
 		self._tabs.setCurrentIndex(index)
+
+		if not self.COLORS["tabs"]["normal"]:
+			self.COLORS["tabs"]["normal"] = self._tabs.tabBar().tabTextColor(index)
+		else:
+			self._tabs.tabBar().setTabTextColor(index, self.COLORS["tabs"]["normal"])
+
 		return index, editor, usersList, topicLabel, filesLabel
 
 	def _setupUI(self):
@@ -671,6 +720,7 @@ class Snakefire(object):
 
 		self._tabs = QtGui.QTabWidget()
 		self._tabs.setTabsClosable(True)
+		self.connect(self._tabs, QtCore.SIGNAL("currentChanged(int)"), self._roomTabFocused)
 		self.connect(self._tabs, QtCore.SIGNAL("tabCloseRequested(int)"), self._roomTabClose)
 
 		self._editor = QtGui.QPlainTextEdit()
@@ -689,6 +739,10 @@ class Snakefire(object):
 		widget = QtGui.QWidget()
 		widget.setLayout(grid)
 		self.setCentralWidget(widget)
+
+		tabWidgetFocusEventFilter = TabWidgetFocusEventFilter(self)
+		self.connect(tabWidgetFocusEventFilter, QtCore.SIGNAL("tabFocused()"), self._roomTabFocused)
+		widget.installEventFilter(tabWidgetFocusEventFilter)
 
 		self.centralWidget().hide()
 
