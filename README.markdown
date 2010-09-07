@@ -97,13 +97,13 @@ explicitly install it, follow these instructions:
 		$ git submodule update
 
    You can keep up with the latest updates by accessing the directory where
-   you installed Sakefire, and running:
+   you installed Snakefire, and running:
 
 		$ git pull --rebase
 
 2. If you are on *KDE*, install the notify configuration to your home directory
    by running the following commands from the directory where you installed
-   Sakefire:
+   Snakefire:
 
 		$ mkdir -p ~/.kde/share/apps/Snakefire
 		$ cp *.notifyrc ~/.kde/share/apps/Snakefire
