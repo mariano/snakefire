@@ -44,6 +44,17 @@ you can install it with (if you don't have yaourt, you should really
 
 Other OS should read [Python Keyring installation docs] [keyring-install].
 
+#### Notifications ####
+
+Depending on your Desktop Environment, you will need the proper notification
+library installed.
+
+1. For *Ubuntu* (GNOME):
+
+		$ sudo apt-get install python-notify
+
+1. For KDE: No need to install a notification library.
+
 #### PyOpenSSL ####
 
 For *Ubuntu based* systems, PyOpenSSL is in the official repositories, and can be

@@ -4,7 +4,7 @@ import os
 import re
 import sys
 
-KDE_ENABLED = os.getenv("KDE_FULL_SESSION")
+from snakefire import GNOME_ENABLED, KDE_ENABLED
 
 from PyQt4 import Qt
 from PyQt4 import QtGui
@@ -13,6 +13,8 @@ from PyQt4 import QtCore
 if KDE_ENABLED:
 	from PyKDE4 import kdecore
 	from PyKDE4 import kdeui
+elif GNOME_ENABLED:
+	import subprocess
 
 import keyring
 
@@ -1013,10 +1015,17 @@ if KDE_ENABLED:
 
 		def _notify(self, room, message):
 			notification = kdeui.KNotification.event(
-				"Alert",
+				room.name,
 				message,
 				QtGui.QPixmap(),
 				self,
 				kdeui.KNotification.CloseWhenWidgetActivated
 			)
 
+if GNOME_ENABLED:
+	class GSnakefire(QSnakefire):
+		def __init__(self, parent=None):
+			super(GSnakefire, self).__init__(parent)
+
+		def notify(self, room, message):
+			subprocess.call(['notify-send', room.name, message])
