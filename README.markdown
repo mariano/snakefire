@@ -49,9 +49,13 @@ Other OS should read [Python Keyring installation docs] [keyring-install].
 Depending on your Desktop Environment, you will need the proper notification
 library installed.
 
-1. For *Ubuntu* (GNOME):
+1. For GNOME in *Ubuntu*:
 
 		$ sudo apt-get install python-notify
+
+1. For GNOME in *Arch Linux*:
+
+		$ pacman -S libnotify notification-daemon python-notify
 
 1. For KDE: No need to install a notification library.
 
