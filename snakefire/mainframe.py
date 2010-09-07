@@ -80,7 +80,8 @@ class Snakefire(object):
 
 	def dragEnterEvent(self, event):
 		room = self.getCurrentRoom()
-		if room and self._getDropFile(event):
+		canUpload = not self._rooms[room.id]["upload"] if room else False
+		if canUpload and self._getDropFile(event):
 			event.acceptProposedAction()
 
 	def dropEvent(self, event):
@@ -267,6 +268,7 @@ class Snakefire(object):
 			"usersList": None,
 			"topicLabel": None,
 			"filesLabel": None,
+			"uploadButton": None,
 			"uploadLabel": None,
 			"uploadWidget": None,
 			"newMessages": 0
@@ -594,6 +596,9 @@ class Snakefire(object):
 			label.hide()
 
 	def _cfUploadProgress(self, room, current, total):
+		if not room.id in self._rooms:
+			return
+		
 		progressBar = self._rooms[room.id]["uploadProgressBar"]
 		if not self._rooms[room.id]["uploadWidget"].isVisible():
 			self._rooms[room.id]["uploadWidget"].show()
@@ -602,6 +607,9 @@ class Snakefire(object):
 		progressBar.setValue(current)
 
 	def _cfUploadFinished(self, room):
+		if not room.id in self._rooms:
+			return
+
 		self._rooms[room.id]["upload"].join()
 		self._rooms[room.id]["upload"] = None
 		self._rooms[room.id]["uploadWidget"].hide()
@@ -627,6 +635,7 @@ class Snakefire(object):
 
 	def _upload(self, room, path):
 		self._rooms[room.id]["upload"] = self._worker.upload(room, path)
+		self._updateRoomLayout()
 
 	def _roomTabClose(self, tabIndex):
 		for roomId in self._rooms:
@@ -651,6 +660,8 @@ class Snakefire(object):
 
 		if tabBar.tabTextColor(tabIndex) != self.COLORS["tabs"]["normal"]:
 			tabBar.setTabTextColor(tabIndex, self.COLORS["tabs"]["normal"])
+
+		self._updateRoomLayout()
 
 	def _roomInTabIndex(self, index):
 		room = None
@@ -715,6 +726,17 @@ class Snakefire(object):
 
 	def _notify(self, room, message):
 		raise NotImplementedError("_notify() must be implemented")
+
+	def _updateRoomLayout(self):
+		room = self.getCurrentRoom()
+		if room:
+			canUpload = not self._rooms[room.id]["upload"]
+			uploadButton = self._rooms[room.id]["uploadButton"]
+			if (
+				(canUpload and not uploadButton.isEnabled()) or
+				(not canUpload and uploadButton.isEnabled())
+			):
+				uploadButton.setEnabled(canUpload)
 
 	def _updateLayout(self):
 		self._menus["file"]["connect"].setEnabled(not self._connected and self._canConnect and not self._connecting)
@@ -802,6 +824,7 @@ class Snakefire(object):
 			"usersList": usersList,
 			"topicLabel": topicLabel,
 			"filesLabel": filesLabel,
+			"uploadButton": uploadButton,
 			"uploadWidget": uploadWidget,
 			"uploadProgressBar": uploadProgressBar,
 			"uploadProgressLabel": uploadProgressLabel
