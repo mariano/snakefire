@@ -82,13 +82,16 @@ class Snakefire(object):
 
 	def dragEnterEvent(self, event):
 		room = self.getCurrentRoom()
-		if room and self._getDropFiles(event):
+		if room and self._getDropFile(event):
 			event.acceptProposedAction()
 
 	def dropEvent(self, event):
-		files = self._getDropFiles(event)
+		room = self.getCurrentRoom()
+		path = self._getDropFile(event)
+		if room and path:
+			self._upload(room, path)
 
-	def _getDropFiles(self, event):
+	def _getDropFile(self, event):
 		files = []
 		urls = event.mimeData().urls()
 		if urls:
@@ -101,7 +104,9 @@ class Snakefire(object):
 						files.append(str(path))
 					except Exception as e:
 						pass
-		return files
+			if len(files) > 1:
+			   files = []
+		return files[0] if files else None
 
 	def getSetting(self, group, setting):
 		settings = self.getSettings(group, asString=False);
@@ -258,11 +263,14 @@ class Snakefire(object):
 		self._rooms[room["id"]] = {
 			"room": None,
 			"stream": None,
+			"upload": None,
 			"tab": None,
 			"editor": None,
 			"usersList": None,
 			"topicLabel": None,
 			"filesLabel": None,
+			"uploadLabel": None,
+			"uploadWidget": None,
 			"newMessages": 0
 		}
 		self._getWorker().join(room["id"])
@@ -279,7 +287,24 @@ class Snakefire(object):
 		self._editor.document().clear()
 
 	def uploadFile(self):
-		print "BROWSE FOR UPLOAD"
+		room = self.getCurrentRoom()
+		if not room:
+			return
+
+		path = QtGui.QFileDialog.getOpenFileName(self, self._("Select file to upload"))
+		if path:
+			self._upload(room, str(path))
+
+	def uploadCancel(self):
+		room = self.getCurrentRoom()
+		if not room:
+			return
+
+		if self._rooms[room.id]["upload"]:
+			self._rooms[room.id]["upload"].stop().join()
+			self._rooms[room.id]["upload"] = None
+
+		self._rooms[room.id]["uploadWidget"].hide()
 
 	def leaveRoom(self, roomId):
 		if roomId in self._rooms:
@@ -508,13 +533,8 @@ class Snakefire(object):
 		self.statusBar().clearMessage()
 
 	def _cfRoomJoined(self, room):
-		index, editor, usersList, topicLabel, filesLabel = self._setupRoomUI(room)
+		self._rooms[room.id].update(self._setupRoomUI(room))
 		self._rooms[room.id]["room"] = room
-		self._rooms[room.id]["tab"] = index
-		self._rooms[room.id]["editor"] = editor
-		self._rooms[room.id]["usersList"] = usersList
-		self._rooms[room.id]["topicLabel"] = topicLabel
-		self._rooms[room.id]["filesLabel"] = filesLabel
 		self._rooms[room.id]["stream"] = self._worker.getStream(room)
 		self.updateRoomUsers(room.id)
 		self.updateRoomUploads(room.id)
@@ -528,6 +548,9 @@ class Snakefire(object):
 	def _cfRoomLeft(self, room):
 		if self._rooms[room.id]["stream"]:
 			self._rooms[room.id]["stream"].stop().join()
+		if self._rooms[room.id]["upload"]:
+			self._rooms[room.id]["upload"].stop().join()
+
 		self._tabs.removeTab(self._rooms[room.id]["tab"])
 		del self._rooms[room.id]
 		self.statusBar().showMessage(self._("Left room %s") % room.name, 5000)
@@ -572,6 +595,19 @@ class Snakefire(object):
 			label.setText("")
 			label.hide()
 
+	def _cfUploadProgress(self, room, current, total):
+		progressBar = self._rooms[room.id]["uploadProgressBar"]
+		if not self._rooms[room.id]["uploadWidget"].isVisible():
+			self._rooms[room.id]["uploadWidget"].show()
+			progressBar.setMaximum(total)
+
+		progressBar.setValue(current)
+
+	def _cfUploadFinished(self, room):
+		self._rooms[room.id]["upload"].join()
+		self._rooms[room.id]["upload"] = None
+		self._rooms[room.id]["uploadWidget"].hide()
+
 	def _cfTopicChanged(self, room, topic):
 		if not room.id in self._rooms:
 			return
@@ -590,6 +626,9 @@ class Snakefire(object):
 
 	def _roomSelected(self, index):
 		self._updatedRoomsList(index)
+
+	def _upload(self, room, path):
+		self._rooms[room.id]["upload"] = self._worker.upload(room, path)
 
 	def _roomTabClose(self, tabIndex):
 		for roomId in self._rooms:
@@ -642,6 +681,8 @@ class Snakefire(object):
 		self.connect(worker, QtCore.SIGNAL("left(PyQt_PyObject)"), self._cfRoomLeft)
 		self.connect(worker, QtCore.SIGNAL("users(PyQt_PyObject, PyQt_PyObject)"), self._cfRoomUsers)
 		self.connect(worker, QtCore.SIGNAL("uploads(PyQt_PyObject, PyQt_PyObject)"), self._cfRoomUploads)
+		self.connect(worker, QtCore.SIGNAL("uploadProgress(PyQt_PyObject, PyQt_PyObject, PyQt_PyObject)"), self._cfUploadProgress)
+		self.connect(worker, QtCore.SIGNAL("uploadFinished(PyQt_PyObject)"), self._cfUploadFinished)
 		self.connect(worker, QtCore.SIGNAL("topicChanged(PyQt_PyObject, PyQt_PyObject)"), self._cfTopicChanged)
 
 	def _getWorker(self):
@@ -701,8 +742,6 @@ class Snakefire(object):
 		editor = QtGui.QTextBrowser()
 		editor.setOpenExternalLinks(True)
 
-		usersLabel = QtGui.QLabel(self._("Users in room:"))
-
 		usersList = QtGui.QListWidget()
 
 		filesLabel = QtGui.QLabel("")
@@ -711,14 +750,30 @@ class Snakefire(object):
 		filesLabel.hide()
 
 		uploadButton = QtGui.QPushButton(self._("&Upload new file"))
-		self.connect(uploadButton, QtCore.SIGNAL('clicked()'), self.uploadFile)
+		self.connect(uploadButton, QtCore.SIGNAL("clicked()"), self.uploadFile)
+
+		uploadProgressBar = QtGui.QProgressBar()
+		uploadProgressLabel = QtGui.QLabel(self._("Uploading:"))
+
+		uploadCancelButton = QtGui.QPushButton(self._("Cancel"))
+		self.connect(uploadCancelButton, QtCore.SIGNAL("clicked()"), self.uploadCancel)
+
+		uploadLayout = QtGui.QHBoxLayout()
+		uploadLayout.addWidget(uploadProgressLabel)
+		uploadLayout.addWidget(uploadProgressBar)
+		uploadLayout.addWidget(uploadCancelButton)
+
+		uploadWidget = QtGui.QWidget()
+		uploadWidget.setLayout(uploadLayout)
+		uploadWidget.hide()
 
 		leftFrameLayout = QtGui.QVBoxLayout()
 		leftFrameLayout.addWidget(topicLabel)
 		leftFrameLayout.addWidget(editor)
+		leftFrameLayout.addWidget(uploadWidget)
 
 		rightFrameLayout = QtGui.QVBoxLayout()
-		rightFrameLayout.addWidget(usersLabel)
+		rightFrameLayout.addWidget(QtGui.QLabel(self._("Users in room:")))
 		rightFrameLayout.addWidget(usersList)
 		rightFrameLayout.addWidget(filesLabel)
 		rightFrameLayout.addWidget(uploadButton)
@@ -743,7 +798,16 @@ class Snakefire(object):
 		else:
 			self._tabs.tabBar().setTabTextColor(index, self.COLORS["tabs"]["normal"])
 
-		return index, editor, usersList, topicLabel, filesLabel
+		return {
+			"tab": index,
+			"editor": editor,
+			"usersList": usersList,
+			"topicLabel": topicLabel,
+			"filesLabel": filesLabel,
+			"uploadWidget": uploadWidget,
+			"uploadProgressBar": uploadProgressBar,
+			"uploadProgressLabel": uploadProgressLabel
+		}
 
 	def _setupUI(self):
 		self.setWindowTitle(self.NAME)

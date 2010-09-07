@@ -59,6 +59,16 @@ class CampfireWorker(QtCore.QThread):
 		self._actionArgs = [room]
 		self.start()
 
+	def upload(self, room, path):
+		upload = room.upload(
+			path,
+			progress_callback = lambda current, total: self._uploadProgress(room, current, total),
+			finished_callback = lambda: self._uploadFinished(room),
+			error_callback = self._uploadError
+		)
+		upload.start()
+		return upload
+
 	def uploads(self, room):
 		self._action = "_uploads"
 		self._actionArgs = [room]
@@ -130,6 +140,19 @@ class CampfireWorker(QtCore.QThread):
 			room,
 			room.get_users()
 		)
+
+	def _uploadError(self, e):
+		self.emit(QtCore.SIGNAL("error(PyQt_PyObject)"), e)
+
+	def _uploadProgress(self, room, current, total):
+		self.emit(QtCore.SIGNAL("uploadProgress(PyQt_PyObject, PyQt_PyObject, PyQt_PyObject)"), 
+			room,
+			current,
+			total
+		)
+
+	def _uploadFinished(self, room):
+		self.emit(QtCore.SIGNAL("uploadFinished(PyQt_PyObject)"), room)
 
 	def _uploads(self, room):
 		self.emit(QtCore.SIGNAL("uploads(PyQt_PyObject, PyQt_PyObject)"),
