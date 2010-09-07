@@ -42,6 +42,7 @@ class Snakefire(object):
 		"nickSelf": "000080",
 		"tabs": {
 			"normal": None,
+			"new": QtGui.QColor(0, 0, 255),
 			"alert": QtGui.QColor(255, 0, 0)
 		}
 	}
@@ -422,9 +423,11 @@ class Snakefire(object):
 			if self._rooms[room.id]["newMessages"] > 0:
 				tabBar.setTabText(tabIndex, "%s (%s)" % (room.name, self._rooms[room.id]["newMessages"]))
 
+			if not isActiveTab and (alert or self._rooms[room.id]["newMessages"] > 0) and tabBar.tabTextColor(tabIndex) == self.COLORS["tabs"]["normal"]:
+				tabBar.setTabTextColor(tabIndex, self.COLORS["tabs"]["alert" if alert else "new"])
+
 			if alert:
 				if not isActiveTab:
-					tabBar.setTabTextColor(tabIndex, self.COLORS["tabs"]["alert"])
 					self._trayIcon.alert()
 				if notify:
 					self._notify(room, message.body)
