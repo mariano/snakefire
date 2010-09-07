@@ -120,7 +120,8 @@ class Snakefire(object):
 				"password": None,
 				"ssl": False,
 				"connect": False,
-				"join": False
+				"join": False,
+				"rooms": []
 			},
 			"program": {
 				"minimize": False
@@ -135,10 +136,6 @@ class Snakefire(object):
 				settings[str(setting)] = self._qsettings.value(setting).toPyObject()
 			self._qsettings.endGroup();
 
-			if asString:
-				for setting in settings:
-					settings[setting] = str(settings[setting]) if settings[setting] else ""
-
 			boolSettings = []
 			if group == "connection":
 				boolSettings += ["ssl", "connect", "join"]
@@ -147,16 +144,22 @@ class Snakefire(object):
 
 			for boolSetting in boolSettings:
 				try:
-					settings[boolSetting] = True if ["true", "1"].index(settings[boolSetting].lower()) >= 0 else False
+					settings[boolSetting] = True if ["true", "1"].index(str(settings[boolSetting]).lower()) >= 0 else False
 				except:
 					settings[boolSetting] = False
 
 			if group == "connection" and settings["subdomain"] and settings["user"]:
-				settings["password"] = keyring.get_password(self.NAME, settings["subdomain"]+"_"+settings["user"]) 
+				settings["password"] = keyring.get_password(self.NAME, str(settings["subdomain"])+"_"+str(settings["user"])) 
 
 			self._settings[group] = settings
 
-		return self._settings[group]
+		settings = self._settings[group]
+		if asString:
+			for setting in settings:
+				if not isinstance(settings[setting], bool):
+					settings[setting] = str(settings[setting]) if settings[setting] else ""
+
+		return settings
 
 	def setSettings(self, group, settings):
 		self._settings[group] = settings;
@@ -191,6 +194,9 @@ class Snakefire(object):
 			self.hide()
 			event.ignore()
 		else:
+			if self.getSetting("connection", "join"):
+				self.setSetting("connection", "rooms", ",".join([str(roomId) for roomId in self._rooms.keys()]))
+
 			self.disconnectNow()
 
 			if hasattr(self, "_workers") and self._workers:
@@ -241,8 +247,8 @@ class Snakefire(object):
 		self._cfDisconnected()
 		self._updateLayout()
 
-	def joinRoom(self):
-		room = self._roomInIndex(self._toolBar["rooms"].currentIndex())
+	def joinRoom(self, roomIndex=None):
+		room = self._roomInIndex(roomIndex if roomIndex else self._toolBar["rooms"].currentIndex())
 		if not room:
 			return
 
@@ -319,7 +325,11 @@ class Snakefire(object):
 				return self._rooms[roomId]["room"]
 
 	def _cfStreamMessage(self, room, message, live=True):
-		if not message.user or (live and message.is_text() and message.is_by_current_user()):
+		if (
+			not message.user or 
+			(live and message.is_text() and message.is_by_current_user()) or
+			not room.id in self._rooms
+		):
 			return
 
 		user = message.user.name
@@ -469,6 +479,26 @@ class Snakefire(object):
 
 		self.statusBar().showMessage(self._("%s connected to Campfire") % user.name, 5000)
 		self._updateLayout()
+
+		if self.getSetting("connection", "join"):
+			rooms = self.getSetting("connection", "rooms")
+			if rooms:
+				for roomId in rooms.split(","):
+					count = self._toolBar["rooms"].count()
+					if count:
+						roomIndex = None
+						for i in range(count):
+							data = self._toolBar["rooms"].itemData(i)
+							if not data.isNull():
+								data = data.toMap()
+								for key in data:
+									if str(key) == "id" and str(data[key].toString()) == roomId:
+										roomIndex = i
+										break;
+								if roomIndex is not None:
+									break
+						if roomIndex is not None:
+							self.joinRoom(roomIndex)
 
 	def _cfDisconnected(self):
 		self._connecting = False
