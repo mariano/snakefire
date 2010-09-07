@@ -349,7 +349,7 @@ class Snakefire(object):
 			if roomId in self._rooms and self._rooms[roomId]["tab"] == index:
 				return self._rooms[roomId]["room"]
 
-	def _cfStreamMessage(self, room, message, live=True):
+	def _cfStreamMessage(self, room, message, live=True, updateRoom=True):
 		if (
 			not message.user or 
 			(live and message.is_text() and message.is_by_current_user()) or
@@ -467,12 +467,13 @@ class Snakefire(object):
 				if notify:
 					self._notify(room, message.body)
 
-		if (message.is_joining() or message.is_leaving()) and live:
-			self.updateRoomUsers(room.id)
-		elif message.is_upload() and live:
-			self.updateRoomUploads(room.id)
-		elif message.is_topic_change() and not message.is_by_current_user():
-			self._cfTopicChanged(room, message.body)
+		if updateRoom:
+			if (message.is_joining() or message.is_leaving()):
+				self.updateRoomUsers(room.id)
+			elif message.is_upload():
+				self.updateRoomUploads(room.id)
+			elif message.is_topic_change() and not message.is_by_current_user():
+				self._cfTopicChanged(room, message.body)
 
 	def _matchesAlert(self, message):
 		matches = False
@@ -532,7 +533,7 @@ class Snakefire(object):
 		self._worker = None
 		self.statusBar().clearMessage()
 
-	def _cfRoomJoined(self, room):
+	def _cfRoomJoined(self, room, messages=[]):
 		self._rooms[room.id].update(self._setupRoomUI(room))
 		self._rooms[room.id]["room"] = room
 		self._rooms[room.id]["stream"] = self._worker.getStream(room)
@@ -540,6 +541,9 @@ class Snakefire(object):
 		self.updateRoomUploads(room.id)
 		self.statusBar().showMessage(self._("Joined room %s") % room.name, 5000)
 		self._updatedRoomsList()
+		if messages:
+			for message in messages:
+				self._cfStreamMessage(room, message, live=False, updateRoom=False)
 
 	def _cfSpoke(self, room, message):
 		self._cfStreamMessage(room, message, live=False)
@@ -684,9 +688,9 @@ class Snakefire(object):
 		self.connect(worker, QtCore.SIGNAL("error(PyQt_PyObject)"), self._cfError)
 		self.connect(worker, QtCore.SIGNAL("connected(PyQt_PyObject, PyQt_PyObject)"), self._cfConnected)
 		self.connect(worker, QtCore.SIGNAL("connectError(PyQt_PyObject)"), self._cfConnectError)
-		self.connect(worker, QtCore.SIGNAL("joined(PyQt_PyObject)"), self._cfRoomJoined)
+		self.connect(worker, QtCore.SIGNAL("joined(PyQt_PyObject, PyQt_PyObject)"), self._cfRoomJoined)
 		self.connect(worker, QtCore.SIGNAL("spoke(PyQt_PyObject, PyQt_PyObject)"), self._cfSpoke)
-		self.connect(worker, QtCore.SIGNAL("streamMessage(PyQt_PyObject, PyQt_PyObject, PyQt_PyObject)"), self._cfStreamMessage)
+		self.connect(worker, QtCore.SIGNAL("streamMessage(PyQt_PyObject, PyQt_PyObject, PyQt_PyObject, PyQt_PyObject)"), self._cfStreamMessage)
 		self.connect(worker, QtCore.SIGNAL("left(PyQt_PyObject)"), self._cfRoomLeft)
 		self.connect(worker, QtCore.SIGNAL("users(PyQt_PyObject, PyQt_PyObject)"), self._cfRoomUsers)
 		self.connect(worker, QtCore.SIGNAL("uploads(PyQt_PyObject, PyQt_PyObject)"), self._cfRoomUploads)

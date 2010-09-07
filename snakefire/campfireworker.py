@@ -110,12 +110,7 @@ class CampfireWorker(QtCore.QThread):
 
 		room.join()
 		room.id = str(room.id)
-		self.emit(QtCore.SIGNAL("joined(PyQt_PyObject)"), room)
-
-		messages = room.recent()
-		if messages:
-			for message in messages:
-				self._streamMessage(room, message, False)
+		self.emit(QtCore.SIGNAL("joined(PyQt_PyObject, PyQt_PyObject)"), room, room.recent())
 
 	def _speak(self, room, message):
 		message = room.speak(message)
@@ -128,11 +123,12 @@ class CampfireWorker(QtCore.QThread):
 	def _streamError(self, e):
 		self.emit(QtCore.SIGNAL("error(PyQt_PyObject)"), e)
 
-	def _streamMessage(self, room, message, live=True):
-		self.emit(QtCore.SIGNAL("streamMessage(PyQt_PyObject, PyQt_PyObject, PyQt_PyObject)"), 
+	def _streamMessage(self, room, message, live=True, updateRoom=True):
+		self.emit(QtCore.SIGNAL("streamMessage(PyQt_PyObject, PyQt_PyObject, PyQt_PyObject, PyQt_PyObject)"), 
 			room,
 			message,
-			live
+			live,
+			updateRoom
 		)
 
 	def _users(self, room):
