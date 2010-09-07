@@ -21,8 +21,6 @@ from dialogs import AlertsDialog, OptionsDialog
 from qtx import Suggester, ClickableQLabel, SuggesterKeyPressEventFilter, TabWidgetFocusEventFilter
 from systray import Systray
 
-import resources
-
 class Snakefire(object):
 	DOMAIN = "snakefire.org"
 	NAME = "Snakefire"

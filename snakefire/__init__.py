@@ -1,4 +1,5 @@
 import os
+import resources
 
 KDE_ENABLED = os.getenv("KDE_FULL_SESSION")
 

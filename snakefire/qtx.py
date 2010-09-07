@@ -97,5 +97,4 @@ class TabWidgetFocusEventFilter(QtCore.QObject):
 	def eventFilter(self, widget, event):
 		if event.type() in [QtCore.QEvent.FocusIn, QtCore.QEvent.WindowActivate]:
 			self.emit(QtCore.SIGNAL("tabFocused()"))
-
 		return False
