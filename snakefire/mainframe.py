@@ -1015,7 +1015,7 @@ if KDE_ENABLED:
 
 		def _notify(self, room, message):
 			notification = kdeui.KNotification.event(
-				room.name,
+				"FilterAlert",
 				message,
 				QtGui.QPixmap(),
 				self,

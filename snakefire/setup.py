@@ -36,7 +36,7 @@ setup(name=name,
 	requires=['pyfire (>=0.3.0)'],
 	scripts=["snakefire.py"],
 	data_files=[
-		("%s/.kde/share/apps/%s" % (home, name), ["Snakefire.notifyrc"]),
+		("%s/.kde/share/apps/%s" % (home, name), ["resources/Snakefire.notifyrc"]),
 		("", [icon, "snakefire.desktop"])
 	]
 )
