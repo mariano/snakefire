@@ -120,8 +120,9 @@ explicitly install it, follow these instructions:
    by running the following commands from the directory where you installed
    Snakefire:
 
-		$ mkdir -p ~/.kde/share/apps/Snakefire
-		$ cp *.notifyrc ~/.kde/share/apps/Snakefire
+		$ export KDE_LOCAL_PREFIX=`kde4-config --local-prefix`
+		$ mkdir -p $KDE_LOCAL_PREFIX/share/apps/Snakefire
+		$ cp *.notifyrc $KDE_LOCAL_PREFIX/share/apps/Snakefire
 		$ killall knotify4
 
 You are now ready to run Snakefire. Enter the directory where you installed
