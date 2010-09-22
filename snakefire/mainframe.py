@@ -536,6 +536,8 @@ class Snakefire(object):
 		self.statusBar().clearMessage()
 
 	def _cfRoomJoined(self, room, messages=[]):
+		if room.id not in self._rooms:
+			return
 		self._rooms[room.id].update(self._setupRoomUI(room))
 		self._rooms[room.id]["room"] = room
 		self._rooms[room.id]["stream"] = self._worker.getStream(room)
