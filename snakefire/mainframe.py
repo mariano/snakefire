@@ -482,10 +482,7 @@ class Snakefire(object):
 		regexes = []
 		words = [
 			"Mariano Iglesias",
-			"Mariano",
-			"apple",
-			"git",
-			"linux"
+			"Mariano"
 		]
 		for word in words:
 			regexes.append("\\b%s\\b" % word)
