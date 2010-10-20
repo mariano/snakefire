@@ -128,6 +128,12 @@ explicitly install it, follow these instructions:
 You are now ready to run Snakefire. Enter the directory where you installed
 Snakefire, and do:
 
+	For *Arch Linux*, you have to use python2:
+
+		$ python2 snakefire.py
+
+	For other OS, do:
+
 		$ python snakefire.py
 
 [license]: http://www.opensource.org/licenses/mit-license.php
