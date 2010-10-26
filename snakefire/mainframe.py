@@ -682,7 +682,7 @@ class Snakefire(object):
 		if not data.isNull():
 			data = data.toMap()
 			for key in data:
-				room[str(key)] = str(data[key].toString())
+				room[str(key)] = str(unicode(data[key].toString(), "utf-8"))
 		return room
 
 	def _connectWorkerSignals(self, worker):
