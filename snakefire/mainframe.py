@@ -284,8 +284,7 @@ class Snakefire(object):
 			return
 
 		self.statusBar().showMessage(self._("Sending message to %s...") % room.name)
-		message = str(message)
-		self._getWorker().speak(room, message)
+		self._getWorker().speak(room, unicode(message))
 		self._editor.document().clear()
 
 	def uploadFile(self):
