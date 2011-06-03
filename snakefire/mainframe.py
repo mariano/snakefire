@@ -758,7 +758,7 @@ class Snakefire(object):
 		self._toolBar["join"].setEnabled(self._toolBar["rooms"].isEnabled())
 
 	def _setupRoomUI(self, room):
-		topic = room.topic if room.topic else 'no topic set'
+		topic = room.topic if room.topic else ""
 		topicLabel = ClickableQLabel(topic)
 		topicLabel.setToolTip(self._("Click here to change room's topic"))
 		topicLabel.setWordWrap(True)
