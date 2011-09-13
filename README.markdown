@@ -44,6 +44,8 @@ you can install it with (if you don't have yaourt, you should really
 
 Other OS should read [Python Keyring installation docs] [keyring-install].
 
+All *XFCE* users should install GNOME keyring.
+
 #### PyOpenSSL ####
 
 For *Ubuntu based* systems, PyOpenSSL is in the official repositories, and can be
