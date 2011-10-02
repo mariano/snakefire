@@ -131,6 +131,10 @@ class Snakefire(object):
 			},
 			"program": {
 				"minimize": False
+			},
+			"display": {
+				"show_join_message": True,
+				"show_part_message": True
 			}
 		}
 
@@ -147,6 +151,8 @@ class Snakefire(object):
 				boolSettings += ["ssl", "connect", "join"]
 			elif group == "program":
 				boolSettings += ["minimize"]
+			elif group == "display":
+				boolSettings += ["show_join_message", "show_part_message"]
 
 			for boolSetting in boolSettings:
 				try:
@@ -164,7 +170,6 @@ class Snakefire(object):
 			for setting in settings:
 				if not isinstance(settings[setting], bool):
 					settings[setting] = str(settings[setting]) if settings[setting] else ""
-
 		return settings
 
 	def setSettings(self, group, settings):
@@ -366,11 +371,11 @@ class Snakefire(object):
 			alert = self._matchesAlert(message.body)
 
 		html = None
-		if message.is_joining():
+		if message.is_joining() and self.getSetting("display", "show_join_message"):
 			html = "<font color=\"#%s\">" % self.COLORS["join"]
 			html += "--&gt; %s joined %s" % (user, room.name)
 			html += "</font>"
-		elif message.is_leaving():
+		elif message.is_leaving() and self.getSetting("display", "show_join_message"):
 			html = "<font color=\"#%s\">" % self.COLORS["leave"]
 			html += "&lt;-- %s has left %s" % (user, room.name)
 			html += "</font>"
@@ -412,7 +417,7 @@ class Snakefire(object):
 			if message.is_by_current_user():
 				html += "<font color=\"#%s\">" % self.COLORS["nickSelf"]
 			elif alert:
-			 	html += "<font color=\"#%s\">" % self.COLORS["nickAlert"]
+				html += "<font color=\"#%s\">" % self.COLORS["nickAlert"]
 			else:
 				html += "<font color=\"#%s\">" % self.COLORS["nick"]
 
