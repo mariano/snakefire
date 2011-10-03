@@ -120,8 +120,8 @@ class CampfireWorker(QtCore.QThread):
         room.leave()
         self.emit(QtCore.SIGNAL("left(PyQt_PyObject)"), room)
 
-    def _streamError(self, e):
-        self.emit(QtCore.SIGNAL("error(PyQt_PyObject)"), e)
+    def _streamError(self, e, room):
+        self.emit(QtCore.SIGNAL("streamError(PyQt_PyObject, PyQt_PyObject)"), e, room)
 
     def _streamMessage(self, room, message, live=True):
         self.emit(QtCore.SIGNAL("streamMessage(PyQt_PyObject, PyQt_PyObject, PyQt_PyObject)"), 
@@ -136,8 +136,8 @@ class CampfireWorker(QtCore.QThread):
             room.get_users()
         )
 
-    def _uploadError(self, e):
-        self.emit(QtCore.SIGNAL("error(PyQt_PyObject)"), e)
+    def _uploadError(self, e, room):
+        self.emit(QtCore.SIGNAL("uploadError(PyQt_PyObject, PyQt_PyObject)"), e, room)
 
     def _uploadProgress(self, room, current, total):
         self.emit(QtCore.SIGNAL("uploadProgress(PyQt_PyObject, PyQt_PyObject, PyQt_PyObject)"), 

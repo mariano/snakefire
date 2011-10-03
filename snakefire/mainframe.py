@@ -639,6 +639,17 @@ class Snakefire(object):
         self.statusBar().clearMessage()
         QtGui.QMessageBox.critical(self, "Error", str(error))
 
+    def _cfRoomError(self, error, room):
+        self.statusBar().clearMessage()
+        if isinstance(error, RuntimeError):
+            (code, message) = error
+            if code == 401:
+                self.statusBar().showMessage(self._("Disconnected from room. Rejoining room %s...") % room.name, 5000)
+                self._rooms[room.id]["stream"].stop().join()
+                self._rooms[room.id]["stream"] = self._worker.getStream(room)
+                return
+        QtGui.QMessageBox.critical(self, "Error", str(error))
+
     def _roomSelected(self, index):
         self._updatedRoomsList(index)
 
@@ -693,6 +704,8 @@ class Snakefire(object):
         self.connect(worker, QtCore.SIGNAL("error(PyQt_PyObject)"), self._cfError)
         self.connect(worker, QtCore.SIGNAL("connected(PyQt_PyObject, PyQt_PyObject)"), self._cfConnected)
         self.connect(worker, QtCore.SIGNAL("connectError(PyQt_PyObject)"), self._cfConnectError)
+        self.connect(worker, QtCore.SIGNAL("streamError(PyQt_PyObject, PyQt_PyObject)"), self._cfRoomError)
+        self.connect(worker, QtCore.SIGNAL("uploadError(PyQt_PyObject, PyQt_PyObject)"), self._cfRoomError)
         self.connect(worker, QtCore.SIGNAL("joined(PyQt_PyObject, PyQt_PyObject)"), self._cfRoomJoined)
         self.connect(worker, QtCore.SIGNAL("spoke(PyQt_PyObject, PyQt_PyObject)"), self._cfSpoke)
         self.connect(worker, QtCore.SIGNAL("streamMessage(PyQt_PyObject, PyQt_PyObject, PyQt_PyObject)"), self._cfStreamMessage)
