@@ -479,7 +479,7 @@ class Snakefire(object):
             if not isActiveTab and (alert or notifyInactiveTab):
                 self._trayIcon.alert()
 
-            if (alert and notify) or (not isActiveTab and notifyInactiveTab):
+            if (alert and notify) or (not isActiveTab and notifyInactiveTab and message.is_text()):
                 self._notify(room, "{} says: {}".format(user, message.body))
 
         if updateRoom:
