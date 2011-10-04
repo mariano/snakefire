@@ -4,7 +4,7 @@ import os
 import re
 import sys
 
-from snakefire import GNOME_ENABLED, KDE_ENABLED
+from snakefire import GNOME_ENABLED, KDE_ENABLED, XFCE_ENABLED
 
 from PyQt4 import Qt
 from PyQt4 import QtGui
@@ -13,8 +13,8 @@ from PyQt4 import QtCore
 if KDE_ENABLED:
     from PyKDE4 import kdecore
     from PyKDE4 import kdeui
-elif GNOME_ENABLED:
-    import subprocess
+elif GNOME_ENABLED or XFCE_ENABLED:
+    import pynotify
 
 import keyring
 
@@ -135,6 +135,10 @@ class Snakefire(object):
             "display": {
                 "show_join_message": True,
                 "show_part_message": True
+            },
+            "alerts": {
+                "notify_inactive_tab": False,
+                "matches": "Snakefire;python"
             }
         }
 
@@ -153,6 +157,8 @@ class Snakefire(object):
                 boolSettings += ["minimize"]
             elif group == "display":
                 boolSettings += ["show_join_message", "show_part_message"]
+            elif group == "alerts":
+                boolSettings += ["notify_inactive_tab"]
 
             for boolSetting in boolSettings:
                 try:
@@ -457,12 +463,15 @@ class Snakefire(object):
             tabIndex = self._rooms[room.id]["tab"]
             tabBar = self._tabs.tabBar()
             isActiveTab = (self.isActiveWindow() and tabIndex == self._tabs.currentIndex())
-
+            
             if message.is_text() and not isActiveTab:
                 self._rooms[room.id]["newMessages"] += 1
 
             if self._rooms[room.id]["newMessages"] > 0:
                 tabBar.setTabText(tabIndex, "%s (%s)" % (room.name, self._rooms[room.id]["newMessages"]))
+
+                if not isActiveTab and self.getSetting("alerts", "notify_inactive_tab"):
+                    self._notify(room, "{} says: {}".format(user, message.body))
 
             if not isActiveTab and (alert or self._rooms[room.id]["newMessages"] > 0) and tabBar.tabTextColor(tabIndex) == self.COLORS["tabs"]["normal"]:
                 tabBar.setTabTextColor(tabIndex, self.COLORS["tabs"]["alert" if alert else "new"])
@@ -484,10 +493,8 @@ class Snakefire(object):
     def _matchesAlert(self, message):
         matches = False
         regexes = []
-        words = [
-            "Mariano Iglesias",
-            "Mariano"
-        ]
+        words = self.getSetting("alerts", "matches").split(";")
+
         for word in words:
             regexes.append("\\b%s\\b" % word)
 
@@ -1039,10 +1046,12 @@ if KDE_ENABLED:
                 kdeui.KNotification.CloseWhenWidgetActivated
             )
 
-if GNOME_ENABLED:
+if GNOME_ENABLED or XFCE_ENABLED:
     class GSnakefire(QSnakefire):
         def __init__(self, parent=None):
             super(GSnakefire, self).__init__(parent)
 
-        def notify(self, room, message):
-            subprocess.call(['notify-send', room.name, message])
+        def _notify(self, room, message):
+            pynotify.init("Snakefire")
+            notify = pynotify.Notification("Snakefire Room: {}".format(room.name), message)
+            notify.show()
