@@ -1050,11 +1050,11 @@ if GNOME_ENABLED or XFCE_ENABLED:
     class GSnakefire(QSnakefire):
         def __init__(self, parent=None):
             super(GSnakefire, self).__init__(parent)
+            pynotify.init("Snakefire")
 
         def _notify(self, room, message):
             title = "Snakefire Room: {}".format(room.name)
             try:
-                pynotify.init("Snakefire")
                 notify = pynotify.Notification(title, message)
                 notify.show()
             except:
