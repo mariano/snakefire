@@ -14,6 +14,7 @@ if KDE_ENABLED:
     from PyKDE4 import kdecore
     from PyKDE4 import kdeui
 elif GNOME_ENABLED or XFCE_ENABLED:
+    import subprocess
     import pynotify
 
 import keyring
@@ -470,17 +471,16 @@ class Snakefire(object):
             if self._rooms[room.id]["newMessages"] > 0:
                 tabBar.setTabText(tabIndex, "%s (%s)" % (room.name, self._rooms[room.id]["newMessages"]))
 
-                if not isActiveTab and self.getSetting("alerts", "notify_inactive_tab"):
-                    self._notify(room, "{} says: {}".format(user, message.body))
-
             if not isActiveTab and (alert or self._rooms[room.id]["newMessages"] > 0) and tabBar.tabTextColor(tabIndex) == self.COLORS["tabs"]["normal"]:
                 tabBar.setTabTextColor(tabIndex, self.COLORS["tabs"]["alert" if alert else "new"])
 
-            if alert:
-                if not isActiveTab:
-                    self._trayIcon.alert()
-                if notify:
-                    self._notify(room, message.body)
+            notifyInactiveTab = self.getSetting("alerts", "notify_inactive_tab")
+
+            if not isActiveTab and (alert or notifyInactiveTab):
+                self._trayIcon.alert()
+
+            if (alert and notify) or (not isActiveTab and notifyInactiveTab):
+                self._notify(room, "{} says: {}".format(user, message.body))
 
         if updateRoom:
             if (message.is_joining() or message.is_leaving()):
@@ -1052,6 +1052,11 @@ if GNOME_ENABLED or XFCE_ENABLED:
             super(GSnakefire, self).__init__(parent)
 
         def _notify(self, room, message):
-            pynotify.init("Snakefire")
-            notify = pynotify.Notification("Snakefire Room: {}".format(room.name), message)
-            notify.show()
+            title = "Snakefire Room: {}".format(room.name)
+            try:
+                pynotify.init("Snakefire")
+                notify = pynotify.Notification(title, message)
+                notify.show()
+            except:
+                subprocess.call(['notify-send', title, message])
+
