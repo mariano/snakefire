@@ -59,10 +59,15 @@ class OptionsDialog(QtGui.QDialog):
             "show_join_message": self._showJoinMessageField.isChecked(),
             "show_part_message": self._showPartMessageField.isChecked()
         }
+        alertsSettings = {
+            "notify_inactive_tab": self._notifyOnInactiveTabField.isChecked(),
+            "matches": str(self._matchesField.text().trimmed())
+        }
 
         self._mainFrame.setSettings("connection", connectionSettings)
         self._mainFrame.setSettings("program", programSettings)
         self._mainFrame.setSettings("display", displaySettings)
+        self._mainFrame.setSettings("alerts", alertsSettings)
 
     def _setupUI(self):
         # Connection group
@@ -94,8 +99,6 @@ class OptionsDialog(QtGui.QDialog):
         self._connectField = QtGui.QCheckBox(self._mainFrame._("Automatically &connect when program starts"), self)
         self._joinField = QtGui.QCheckBox(self._mainFrame._("&Join last opened channels once connected"), self)
         self._minimizeField = QtGui.QCheckBox(self._mainFrame._("&Minimize to system tray if window is minimized, or closed"), self)
-        self._showJoinMessageField = QtGui.QCheckBox(self._mainFrame._("&Show join messages"), self)
-        self._showPartMessageField = QtGui.QCheckBox(self._mainFrame._("&Show part messages"), self)
 
         programGrid = QtGui.QGridLayout()
         programGrid.addWidget(self._connectField, 1, 0)
@@ -105,6 +108,10 @@ class OptionsDialog(QtGui.QDialog):
         programGroupBox = QtGui.QGroupBox(self._mainFrame._("Program settings"))
         programGroupBox.setLayout(programGrid)
 
+        # Display group
+        self._showJoinMessageField = QtGui.QCheckBox(self._mainFrame._("&Show join messages"), self)
+        self._showPartMessageField = QtGui.QCheckBox(self._mainFrame._("&Show part messages"), self)
+        
         displayGrid = QtGui.QGridLayout()
         displayGrid.addWidget(self._showJoinMessageField, 1, 0)
         displayGrid.addWidget(self._showPartMessageField, 2, 0)
@@ -112,6 +119,19 @@ class OptionsDialog(QtGui.QDialog):
         displayGroupBox = QtGui.QGroupBox(self._mainFrame._("Display settings"))
         displayGroupBox.setLayout(displayGrid)
 
+        # Alert group
+        
+        self._notifyOnInactiveTabField = QtGui.QCheckBox(self._mainFrame._("&Notify on inactive messages"), self)
+        self._matchesField = QtGui.QLineEdit(self)
+        
+        alertsGrid = QtGui.QGridLayout()
+        alertsGrid.addWidget(self._notifyOnInactiveTabField, 1, 0)
+        alertsGrid.addWidget(QtGui.QLabel(self._mainFrame._("Matches:"), self), 2, 0)
+        alertsGrid.addWidget(self._matchesField, 2, 1)
+
+        alertsGroupBox = QtGui.QGroupBox(self._mainFrame._("Alerts & Notifications"))
+        alertsGroupBox.setLayout(alertsGrid)
+         
         # Buttons
 
         self._okButton = QtGui.QPushButton(self._mainFrame._("&OK"), self)
@@ -127,6 +147,7 @@ class OptionsDialog(QtGui.QDialog):
         grid.addWidget(connectionGroupBox, 1, 0)
         grid.addWidget(programGroupBox, 2, 0)
         grid.addWidget(displayGroupBox, 3, 0)
+        grid.addWidget(alertsGroupBox, 4, 0)
 
         hbox = QtGui.QHBoxLayout()
         hbox.addStretch(1)
@@ -143,6 +164,7 @@ class OptionsDialog(QtGui.QDialog):
         connectionSettings = self._mainFrame.getSettings("connection")
         programSettings = self._mainFrame.getSettings("program")
         displaySettings = self._mainFrame.getSettings("display")
+        alertsSettings = self._mainFrame.getSettings("alerts")
 
         self._subdomainField.setText(connectionSettings["subdomain"])
         self._usernameField.setText(connectionSettings["user"])
@@ -154,5 +176,7 @@ class OptionsDialog(QtGui.QDialog):
         self._minimizeField.setChecked(programSettings["minimize"])
         self._showJoinMessageField.setChecked(displaySettings["show_join_message"])
         self._showPartMessageField.setChecked(displaySettings["show_part_message"])
+        self._notifyOnInactiveTabField.setChecked(alertsSettings["notify_inactive_tab"])
+        self._matchesField.setText(alertsSettings["matches"])
 
         self.validate()
