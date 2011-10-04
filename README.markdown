@@ -55,6 +55,17 @@ For *Arch Linux*, PyOpenSSL is in the extra repository, and can be installed wit
 
 Other OS should read [PyOpenSSL download page] [pyopenssl-download].
 
+#### Notifications ####
+
+For *Ubuntu based* systems, python-notify is in the official repositores, and can be
+installed the following way:
+
+        $ sudo apt-get install python-notify
+
+For *Arch Linux*, python-notify is in the extra repository, and can be installed with:
+
+        $ pacman -S python-notify
+
 #### Twisted ####
 
 For *Ubuntu based* systems, Twisted is in the official repositories, and can be
