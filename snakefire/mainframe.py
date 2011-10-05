@@ -3,12 +3,17 @@ import datetime
 import os
 import re
 import sys
+import urllib2
+import base64
+import imghdr
+import webbrowser
 
 from snakefire import GNOME_ENABLED, KDE_ENABLED, XFCE_ENABLED
 
 from PyQt4 import Qt
 from PyQt4 import QtGui
 from PyQt4 import QtCore
+from PyQt4.QtWebKit import QWebView, QWebPage
 
 if KDE_ENABLED:
     from PyKDE4 import kdecore
@@ -125,6 +130,7 @@ class Snakefire(object):
                 "subdomain": None,
                 "user": None,
                 "password": None,
+                "api_auth_token": None,
                 "ssl": False,
                 "connect": False,
                 "join": False,
@@ -278,7 +284,8 @@ class Snakefire(object):
             "stream": None,
             "upload": None,
             "tab": None,
-            "editor": None,
+            "view": None,
+            "frame": None,
             "usersList": None,
             "topicLabel": None,
             "filesLabel": None,
@@ -434,11 +441,7 @@ class Snakefire(object):
             html += "</font>"
         elif message.is_upload():
             html = "<font color=\"#%s\">" % self.COLORS["upload"]
-            html += "<strong>%s</strong> uploaded <a href=\"%s\">%s</a>" % (
-                user,
-                message.upload["url"],
-                message.upload["name"]
-            )
+            html += self._displayUpload(user, message)
             html += "</font>"
         elif message.is_topic_change():
             html = "<font color=\"#%s\">" % self.COLORS["leave"]
@@ -447,19 +450,19 @@ class Snakefire(object):
 
         if html:
             html = "%s<br />" % html
-            editor = self._rooms[room.id]["editor"]
-            if not editor:
+            view = self._rooms[room.id]["view"]
+            frame = self._rooms[room.id]["frame"]
+            if not view and frame:
                 return
 
-            scrollbar = editor.verticalScrollBar()
-            currentScrollbarValue = scrollbar.value()
-            autoScroll = (currentScrollbarValue == scrollbar.maximum())
-            editor.moveCursor(QtGui.QTextCursor.End)
-            editor.textCursor().insertHtml(html)
+            currentScrollbarValue = frame.scrollPosition()
+            autoScroll = (currentScrollbarValue == frame.scrollBarMaximum(QtCore.Qt.Vertical))
+            frame.setHtml(frame.toHtml() + html)
+            view.show()
             if autoScroll:
-                scrollbar.setValue(scrollbar.maximum())
+                frame.scroll(0, frame.scrollBarMaximum(QtCore.Qt.Vertical))
             else:
-                scrollbar.setValue(currentScrollbarValue)
+                frame.scroll(currentScrollbarValue.x(), currentScrollbarValue.y())
 
             tabIndex = self._rooms[room.id]["tab"]
             tabBar = self._tabs.tabBar()
@@ -490,6 +493,46 @@ class Snakefire(object):
             elif message.is_topic_change() and not message.is_by_current_user():
                 self._cfTopicChanged(room, message.body)
 
+    def _fetchImage(self, url):
+        request = urllib2.Request(url)
+        auth_header = base64.encodestring('{}:{}'.format(self.getSetting("connection", "api_auth_token"), 'X')).replace('\n', '')
+        request.add_header("Authorization", "Basic {}".format(auth_header))   
+        result = urllib2.urlopen(request)
+        return result.read()
+
+    def _findImageType(self, data):
+        for test in imghdr.tests:
+            res = test(data, None)
+            if res:
+                return res
+        return None
+
+
+    def _displayUpload(self, user, message):
+        html = "<strong>{user}</strong> uploaded: <br />".format(user=user)
+        
+        if message.upload['content_type'].startswith("image/"):
+            return self._displayImage(html, message)
+        return self._displayFile(html, message)
+        
+    def _displayImage(self, html, message):
+        image_data = base64.encodestring(self._fetchImage(message.upload['url']))
+        
+        html += "<a href=\"{url}\"><img src=\"data:image/{image_type};base64,{image_data}\" \></a>".format(
+            image_type=message.upload['content_type'],
+            image_data=image_data,
+            url=message.upload['url'],
+            name=message.upload['name']
+        )
+        return html
+
+    def _displayFile(self, html, message):
+        html += "<a href=\"{url}\">{name}</a>".format(
+            url=message.upload['url'],
+            name=message.upload['name']
+        )
+        return html
+    
     def _matchesAlert(self, message):
         matches = False
         regexes = []
@@ -789,8 +832,12 @@ class Snakefire(object):
         topicLabel.setWordWrap(True)
         self.connect(topicLabel, QtCore.SIGNAL("clicked()"), self.changeTopic)
 
-        editor = QtGui.QTextBrowser()
-        editor.setOpenExternalLinks(True)
+        view = QWebView()
+        view.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
+        view.page().setLinkDelegationPolicy(QWebPage.DelegateAllLinks)
+        def linkClicked(url): webbrowser.open(str(url.toString()))
+        view.connect(view, QtCore.SIGNAL("linkClicked (const QUrl&)"), linkClicked)
+        frame = view.page().mainFrame()
 
         usersList = QtGui.QListWidget()
 
@@ -819,7 +866,7 @@ class Snakefire(object):
 
         leftFrameLayout = QtGui.QVBoxLayout()
         leftFrameLayout.addWidget(topicLabel)
-        leftFrameLayout.addWidget(editor)
+        leftFrameLayout.addWidget(view)
         leftFrameLayout.addWidget(uploadWidget)
 
         rightFrameLayout = QtGui.QVBoxLayout()
@@ -850,7 +897,8 @@ class Snakefire(object):
 
         return {
             "tab": index,
-            "editor": editor,
+            "view": view,
+            "frame": frame,
             "usersList": usersList,
             "topicLabel": topicLabel,
             "filesLabel": filesLabel,
@@ -881,8 +929,8 @@ class Snakefire(object):
         grid = QtGui.QGridLayout()
         grid.setRowStretch(0, 1)
         grid.addWidget(self._tabs, 0, 0, 1, -1)
-        grid.addWidget(self._editor, 1, 0)
-        grid.addWidget(speakButton, 1, 1)
+        grid.addWidget(self._editor, 2, 0)
+        grid.addWidget(speakButton, 2, 1)
 
         widget = QtGui.QWidget()
         widget.setLayout(grid)
@@ -1060,3 +1108,9 @@ if GNOME_ENABLED or XFCE_ENABLED:
             except:
                 subprocess.call(['notify-send', title, message])
 
+def debug_trace():
+  '''set a tracepoint in the python debugger that works with qt'''
+  from pyqt4.qtcore import pyqtremoveinputhook
+  from pdb import set_trace
+  pyqtremoveinputhook()
+  set_trace()
