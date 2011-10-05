@@ -30,9 +30,9 @@ class CampfireWorker(QtCore.QThread):
         self._action = "_connect"
         self.start()
 
-    def join(self, roomId):
+    def join(self, roomId, rejoin=False):
         self._action = "_join"
-        self._actionArgs = [roomId]
+        self._actionArgs = [roomId, rejoin]
         self.start()
 
     def speak(self, room, message):
@@ -96,12 +96,13 @@ class CampfireWorker(QtCore.QThread):
                 self._actionArgs = []
 
     def _connect(self):
-        self.emit(QtCore.SIGNAL("connected(PyQt_PyObject, PyQt_PyObject)"), 
-            self._campfire.get_user(),
-            self._campfire.get_rooms()
-        )
+        if self._campfire:
+            self.emit(QtCore.SIGNAL("connected(PyQt_PyObject, PyQt_PyObject)"), 
+                self._campfire.get_user(),
+                self._campfire.get_rooms()
+            )
 
-    def _join(self, roomId):
+    def _join(self, roomId, rejoin):
         try:
             room = self._campfire.get_room(roomId)
         except Exception as e:
@@ -110,7 +111,8 @@ class CampfireWorker(QtCore.QThread):
 
         room.join()
         room.id = str(room.id)
-        self.emit(QtCore.SIGNAL("joined(PyQt_PyObject, PyQt_PyObject)"), room, room.recent())
+        recentMessages = room.recent() if not rejoin else None
+        self.emit(QtCore.SIGNAL("joined(PyQt_PyObject, PyQt_PyObject, PyQt_PyObject)"), room, recentMessages, rejoin)
 
     def _speak(self, room, message):
         message = room.speak(message)

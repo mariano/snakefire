@@ -543,17 +543,20 @@ class Snakefire(object):
         self._worker = None
         self.statusBar().clearMessage()
 
-    def _cfRoomJoined(self, room, messages=[]):
+    def _cfRoomJoined(self, room, messages=[], rejoined=False):
         if room.id not in self._rooms:
             return
-        self._rooms[room.id].update(self._setupRoomUI(room))
-        self._rooms[room.id]["room"] = room
+
+        if not rejoined:
+            self._rooms[room.id].update(self._setupRoomUI(room))
+            self._rooms[room.id]["room"] = room
         self._rooms[room.id]["stream"] = self._worker.getStream(room)
         self.updateRoomUsers(room.id)
         self.updateRoomUploads(room.id)
-        self.statusBar().showMessage(self._("Joined room %s") % room.name, 5000)
+        if not rejoined:
+            self.statusBar().showMessage(self._("Joined room %s") % room.name, 5000)
         self._updatedRoomsList()
-        if messages:
+        if not rejoined and messages:
             for message in messages:
                 self._cfStreamMessage(room, message, live=False, updateRoom=False)
 
@@ -644,7 +647,10 @@ class Snakefire(object):
 
     def _cfError(self, error):
         self.statusBar().clearMessage()
-        QtGui.QMessageBox.critical(self, "Error", str(error))
+        if not self._connected:
+            QtGui.QMessageBox.critical(self, "Error", self._("Error while connecting: %s" % str(error)))
+        else:
+            QtGui.QMessageBox.critical(self, "Error", str(error))
 
     def _cfRoomError(self, error, room):
         self.statusBar().clearMessage()
@@ -653,7 +659,7 @@ class Snakefire(object):
             if code == 401:
                 self.statusBar().showMessage(self._("Disconnected from room. Rejoining room %s...") % room.name, 5000)
                 self._rooms[room.id]["stream"].stop().join()
-                self._rooms[room.id]["stream"] = self._worker.getStream(room)
+                self._getWorker().join(room.id, True)
                 return
         QtGui.QMessageBox.critical(self, "Error", str(error))
 
@@ -713,7 +719,7 @@ class Snakefire(object):
         self.connect(worker, QtCore.SIGNAL("connectError(PyQt_PyObject)"), self._cfConnectError)
         self.connect(worker, QtCore.SIGNAL("streamError(PyQt_PyObject, PyQt_PyObject)"), self._cfRoomError)
         self.connect(worker, QtCore.SIGNAL("uploadError(PyQt_PyObject, PyQt_PyObject)"), self._cfRoomError)
-        self.connect(worker, QtCore.SIGNAL("joined(PyQt_PyObject, PyQt_PyObject)"), self._cfRoomJoined)
+        self.connect(worker, QtCore.SIGNAL("joined(PyQt_PyObject, PyQt_PyObject, PyQt_PyObject)"), self._cfRoomJoined)
         self.connect(worker, QtCore.SIGNAL("spoke(PyQt_PyObject, PyQt_PyObject)"), self._cfSpoke)
         self.connect(worker, QtCore.SIGNAL("streamMessage(PyQt_PyObject, PyQt_PyObject, PyQt_PyObject)"), self._cfStreamMessage)
         self.connect(worker, QtCore.SIGNAL("left(PyQt_PyObject)"), self._cfRoomLeft)
