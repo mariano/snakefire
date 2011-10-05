@@ -6,8 +6,8 @@ Pyfire is released under the [MIT License] [license].
 
 ## TEAM ##
 
-Mariano Iglesias - [@mgiglesias] [twitter_mgiglesias] | [marianoiglesias.com.ar] [website_mgiglesias]
-Zak Zajac - [@madzak] [twitter_madzak] | [madzak.com] [website_madzak]
+* Mariano Iglesias - [@mgiglesias] [twitter_mgiglesias] | [marianoiglesias.com.ar] [website_mgiglesias]
+* Zak Zajac - [@madzak] [twitter_madzak] | [madzak.com] [website_madzak]
 
 ## INSTALLATION ##
 
