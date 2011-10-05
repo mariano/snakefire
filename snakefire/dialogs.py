@@ -48,7 +48,6 @@ class OptionsDialog(QtGui.QDialog):
             "subdomain": str(self._subdomainField.text().trimmed()),
             "user": str(self._usernameField.text().trimmed()),
             "password": str(self._passwordField.text()),
-            "api_auth_token": str(self._apiAuthTokenField.text().trimmed()),
             "ssl": self._sslField.isChecked(),
             "connect": self._connectField.isChecked(),
             "join": self._joinField.isChecked()
@@ -77,7 +76,6 @@ class OptionsDialog(QtGui.QDialog):
         self._usernameField = QtGui.QLineEdit(self)
         self._passwordField = QtGui.QLineEdit(self)
         self._passwordField.setEchoMode(QtGui.QLineEdit.Password)
-        self._apiAuthTokenField = QtGui.QLineEdit(self)
         self._sslField = QtGui.QCheckBox(self._mainFrame._("Use &secure connection (SSL)"), self)
 
         self.connect(self._subdomainField, QtCore.SIGNAL('textChanged(QString)'), self.validate)
@@ -91,9 +89,7 @@ class OptionsDialog(QtGui.QDialog):
         connectionGrid.addWidget(self._usernameField, 2, 1)
         connectionGrid.addWidget(QtGui.QLabel(self._mainFrame._("Password:"), self), 3, 0)
         connectionGrid.addWidget(self._passwordField, 3, 1)
-        connectionGrid.addWidget(QtGui.QLabel(self._mainFrame._("API Auth Token:"), self), 4, 0)
-        connectionGrid.addWidget(self._apiAuthTokenField, 4, 1)
-        connectionGrid.addWidget(self._sslField, 5, 0, 1, -1)
+        connectionGrid.addWidget(self._sslField, 4, 0, 1, -1)
 
         connectionGroupBox = QtGui.QGroupBox(self._mainFrame._("Campfire connection"))
         connectionGroupBox.setLayout(connectionGrid)
@@ -174,7 +170,6 @@ class OptionsDialog(QtGui.QDialog):
         self._usernameField.setText(connectionSettings["user"])
         if connectionSettings["password"]:
             self._passwordField.setText(connectionSettings["password"])
-        self._apiAuthTokenField.setText(connectionSettings["api_auth_token"])
         self._sslField.setChecked(connectionSettings["ssl"])
         self._connectField.setChecked(connectionSettings["connect"])
         self._joinField.setChecked(connectionSettings["join"])

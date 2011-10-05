@@ -130,7 +130,6 @@ class Snakefire(object):
                 "subdomain": None,
                 "user": None,
                 "password": None,
-                "api_auth_token": None,
                 "ssl": False,
                 "connect": False,
                 "join": False,
@@ -495,8 +494,8 @@ class Snakefire(object):
 
     def _fetchImage(self, url):
         request = urllib2.Request(url)
-        auth_header = base64.encodestring('{}:{}'.format(self.getSetting("connection", "api_auth_token"), 'X')).replace('\n', '')
-        request.add_header("Authorization", "Basic {}".format(auth_header))   
+        auth_header = base64.encodestring('{}:{}'.format(self._worker.getApiToken(), 'X')).replace('\n', '')
+        request.add_header("Authorization", "Basic {}".format(auth_header))
         result = urllib2.urlopen(request)
         return result.read()
 
@@ -518,14 +517,12 @@ class Snakefire(object):
         
     def _displayImage(self, html, message):
         image_data = base64.encodestring(self._fetchImage(message.upload['url']))
-        
         html += "<a href=\"{url}\"><img src=\"data:image/{image_type};base64,{image_data}\" \></a>".format(
             image_type=message.upload['content_type'],
             image_data=image_data,
             url=message.upload['url'],
             name=message.upload['name']
         )
-
         return html
 
     def _displayFile(self, html, message):
