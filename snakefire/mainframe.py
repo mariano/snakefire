@@ -482,7 +482,7 @@ class Snakefire(object):
             if not isActiveTab and (alert or notifyInactiveTab):
                 self._trayIcon.alert()
 
-            if (alert and notify) or (not isActiveTab and notifyInactiveTab):
+            if (alert and notify) or (not isActiveTab and notifyInactiveTab and message.is_text()):
                 self._notify(room, "{} says: {}".format(user, message.body))
 
         if updateRoom:
@@ -1098,11 +1098,11 @@ if GNOME_ENABLED or XFCE_ENABLED:
     class GSnakefire(QSnakefire):
         def __init__(self, parent=None):
             super(GSnakefire, self).__init__(parent)
+            pynotify.init("Snakefire")
 
         def _notify(self, room, message):
             title = "Snakefire Room: {}".format(room.name)
             try:
-                pynotify.init("Snakefire")
                 notify = pynotify.Notification(title, message)
                 notify.show()
             except:
