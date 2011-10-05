@@ -4,6 +4,11 @@
 
 Pyfire is released under the [MIT License] [license].
 
+## TEAM ##
+
+Mariano Iglesias - [@mgiglesias] [twitter_mgiglesias] | [marianoiglesias.com.ar] [website_mgiglesias]
+Zak Zajac - [@madzak] [twitter_madzak] | [madzak.com] [website_madzak]
+
 ## INSTALLATION ##
 
 ### Requirements ###
@@ -138,3 +143,8 @@ Snakefire, and do:
 [pyopenssl-download]: http://pypi.python.org/pypi/pyOpenSSL
 [twisted]: http://twistedmatrix.com
 [twisted-download]: http://twistedmatrix.com/trac/wiki/Downloads
+[twitter_mgiglesias]: http://twitter.com/mgiglesias
+[website_mgiglesias]: http://marianoiglesias.com.ar
+[twitter_madzak]: http://twitter.com/madzak
+[website_madzak]: http://www.madzak.com
+
