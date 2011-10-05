@@ -509,10 +509,11 @@ class Snakefire(object):
 
 
     def _displayUpload(self, user, message):
-        html = "<strong>{user}</strong> uploaded: <br />".format(user=user)
+        html = "<strong>{user}</strong> uploaded<br/>".format(user=user)
         
         if message.upload['content_type'].startswith("image/"):
             return self._displayImage(html, message)
+
         return self._displayFile(html, message)
         
     def _displayImage(self, html, message):
@@ -524,6 +525,7 @@ class Snakefire(object):
             url=message.upload['url'],
             name=message.upload['name']
         )
+
         return html
 
     def _displayFile(self, html, message):
@@ -531,6 +533,7 @@ class Snakefire(object):
             url=message.upload['url'],
             name=message.upload['name']
         )
+        
         return html
     
     def _matchesAlert(self, message):
@@ -837,7 +840,10 @@ class Snakefire(object):
         view.page().setLinkDelegationPolicy(QWebPage.DelegateAllLinks)
         def linkClicked(url): webbrowser.open(str(url.toString()))
         view.connect(view, QtCore.SIGNAL("linkClicked (const QUrl&)"), linkClicked)
+
         frame = view.page().mainFrame()
+        def autoScroll(size): frame.scroll(size.width(), size.height())
+        frame.connect(frame, QtCore.SIGNAL("contentsSizeChanged (const QSize&)"), autoScroll)
 
         usersList = QtGui.QListWidget()
 
