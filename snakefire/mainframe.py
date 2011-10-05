@@ -835,13 +835,16 @@ class Snakefire(object):
         topicLabel.setWordWrap(True)
         self.connect(topicLabel, QtCore.SIGNAL("clicked()"), self.changeTopic)
 
-        view = QWebView()
+        view = SnakeFireWebView(self)
         view.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
+        frame = view.page().mainFrame()
+
+        #Send all link clicks to systems web browser
         view.page().setLinkDelegationPolicy(QWebPage.DelegateAllLinks)
         def linkClicked(url): webbrowser.open(str(url.toString()))
         view.connect(view, QtCore.SIGNAL("linkClicked (const QUrl&)"), linkClicked)
 
-        frame = view.page().mainFrame()
+        # Support auto scroll when needed
         def autoScroll(size): frame.scroll(size.width(), size.height())
         frame.connect(frame, QtCore.SIGNAL("contentsSizeChanged (const QSize&)"), autoScroll)
 
@@ -1120,3 +1123,14 @@ def debug_trace():
   from pdb import set_trace
   pyqtremoveinputhook()
   set_trace()
+
+class SnakeFireWebView(QWebView):
+    def __init__(self, snakefire, parent=None):
+        QWebView.__init__(self, parent)
+        self.snakeFire = snakefire
+
+    def dragEnterEvent(self, event): 
+        return self.snakeFire.dragEnterEvent(event)        
+
+    def dropEvent(self, event):
+        return self.snakeFire.dropEvent(event)
