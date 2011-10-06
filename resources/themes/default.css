@@ -34,10 +34,17 @@ body {
 
 .topic {
     clear: both;
+    color: #808080;
 }
 
 .tweet {
     clear: both;
+    color: #000000;
+}
+
+.upload {
+    clear: both;
+    color: #000000;
 }
 
 .time {
