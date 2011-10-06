@@ -5,7 +5,6 @@ import re
 import sys
 import urllib2
 import base64
-import imghdr
 import webbrowser
 
 from snakefire import GNOME_ENABLED, KDE_ENABLED, XFCE_ENABLED
@@ -380,8 +379,10 @@ class Snakefire(object):
             html = "<div class=\"left\">"
             html += "&lt;-- %s has left %s" % (user, room.name)
             html += "</div>"
-        elif message.is_text():
-            body = self._plainTextToHTML(message.tweet["tweet"] if message.is_tweet() else message.body)
+        elif message.is_text() or message.is_upload():
+            if message.body:
+                body = self._plainTextToHTML(message.tweet["tweet"] if message.is_tweet() else message.body)
+
             if message.is_tweet():
                 body = "<div class=\"tweet\"><a href=\"%s\">%s</a> <a href=\"%s\">tweeted</a>: %s</div>" % (
                     "http://twitter.com/%s" % message.tweet["user"],
@@ -391,6 +392,8 @@ class Snakefire(object):
                 )
             elif message.is_paste():
                 body = "<div class=\"paste\">%s</div>" % body
+            elif message.is_upload():
+                body = "<div class=\"upload\">%s</div>" % self._displayUpload(user, message)
             else:
                 body = self._autoLink(body)
 
@@ -423,10 +426,6 @@ class Snakefire(object):
             html += "%s" % user
             html += "</span>: "
             html += body
-            html += "</div>"
-        elif message.is_upload():
-            html = "<div class=\"upload\">"
-            html += self._displayUpload(user, message)
             html += "</div>"
         elif message.is_topic_change():
             html = "<div class=\"topic\">"
@@ -484,40 +483,23 @@ class Snakefire(object):
         result = urllib2.urlopen(request)
         return result.read()
 
-    def _findImageType(self, data):
-        for test in imghdr.tests:
-            res = test(data, None)
-            if res:
-                return res
-        return None
-
-
     def _displayUpload(self, user, message):
-        html = "<strong>{user}</strong> uploaded<br/>".format(user=user)
-        
         if message.upload['content_type'].startswith("image/"):
-            return self._displayImage(html, message)
-
-        return self._displayFile(html, message)
-        
-    def _displayImage(self, html, message):
-        image_data = base64.encodestring(self._fetchImage(message.upload['url']))
-        html += "<a href=\"{url}\"><img src=\"data:image/{image_type};base64,{image_data}\" \></a>".format(
-            image_type=message.upload['content_type'],
-            image_data=image_data,
-            url=message.upload['url'],
-            name=message.upload['name']
-        )
+            image_data = base64.encodestring(self._fetchImage(message.upload['url']))
+            html = "<br />"
+            html += "<a href=\"{url}\"><img src=\"data:image/{image_type};base64,{image_data}\" \></a>".format(
+                image_type=message.upload['content_type'],
+                image_data=image_data,
+                url=message.upload['url'],
+                name=message.upload['name']
+            )
+        else:
+            html = "<a href=\"{url}\">{name}</a>".format(
+                url=message.upload['url'],
+                name=message.upload['name']
+            )
         return html
-
-    def _displayFile(self, html, message):
-        html += "<a href=\"{url}\">{name}</a>".format(
-            url=message.upload['url'],
-            name=message.upload['name']
-        )
         
-        return html
-    
     def _matchesAlert(self, message):
         matches = False
         regexes = []
