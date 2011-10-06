@@ -1,0 +1,60 @@
+body {
+    font-size: 10px;
+}
+
+.message {
+    clear: both;
+    color: #000000;
+}
+
+.alert {
+    clear: both;
+    margin-top: 5px;
+    margin-bottom: 5px;
+    padding: 5px;
+    color: #ff0000;
+    font-weight: bold;
+    border: 1px solid #800000;
+}
+
+.joined, .left {
+    clear: both;
+    color: #cb81cb;
+}
+
+.paste {
+    clear: both;
+    margin-top: 5px;
+    margin-bottom: 5px;
+    padding: 10px;
+    border: 1px solid black;
+    background: #efefef;
+}
+
+.topic {
+    clear: both;
+}
+
+.tweet {
+    clear: both;
+}
+
+.time {
+    color: #c0c0c0;
+}
+
+.nick {
+    color: #808080;
+}
+
+.alert .nick {
+    color: #ff0000;
+}
+
+.nick.self {
+    color: #000080;
+}
+
+.topic .new_topic {
+    font-weight: bold;
+}

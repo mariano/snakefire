@@ -36,21 +36,9 @@ class Snakefire(object):
     VERSION = "1.0.1"
     ICON = "snakefire.png"
     COLORS = {
-        "time": "c0c0c0",
-        "alert": "ff0000",
-        "join": "cb81cb",
-        "leave": "cb81cb",
-        "topic": "808080",
-        "upload": "000000",
-        "message": "000000",
-        "nick": "808080",
-        "nickAlert": "ff0000",
-        "nickSelf": "000080",
-        "tabs": {
-            "normal": None,
-            "new": QtGui.QColor(0, 0, 255),
-            "alert": QtGui.QColor(255, 0, 0)
-        }
+        "normal": None,
+        "new": QtGui.QColor(0, 0, 255),
+        "alert": QtGui.QColor(255, 0, 0)
     }
 
     def __init__(self):
@@ -385,24 +373,24 @@ class Snakefire(object):
 
         html = None
         if message.is_joining() and self.getSetting("display", "show_join_message"):
-            html = "<font color=\"#%s\">" % self.COLORS["join"]
+            html = "<div class=\"joined\">"
             html += "--&gt; %s joined %s" % (user, room.name)
-            html += "</font>"
+            html += "</div>"
         elif message.is_leaving() and self.getSetting("display", "show_join_message"):
-            html = "<font color=\"#%s\">" % self.COLORS["leave"]
+            html = "<div class=\"left\">"
             html += "&lt;-- %s has left %s" % (user, room.name)
-            html += "</font>"
+            html += "</div>"
         elif message.is_text():
             body = self._plainTextToHTML(message.tweet["tweet"] if message.is_tweet() else message.body)
             if message.is_tweet():
-                body = "<a href=\"%s\">%s</a> <a href=\"%s\">tweeted</a>: %s" % (
+                body = "<div class=\"tweet\"><a href=\"%s\">%s</a> <a href=\"%s\">tweeted</a>: %s</div>" % (
                     "http://twitter.com/%s" % message.tweet["user"],
                     message.tweet["user"], 
                     message.tweet["url"],
                     body
                 )
             elif message.is_paste():
-                body = "<br /><hr /><code>%s</code><hr />" % body
+                body = "<div class=\"paste\">%s</div>" % body
             else:
                 body = self._autoLink(body)
 
@@ -420,35 +408,32 @@ class Snakefire(object):
             if created.daysTo(QtCore.QDateTime.currentDateTime()):
                 createdFormat = "MMM d,  %s" % createdFormat
 
-            html = "<font color=\"#%s\">[%s]</font> " % (self.COLORS["time"], created.toLocalTime().toString(createdFormat))
-
             if alert:
-                html += "<font color=\"#%s\">" % self.COLORS["alert"]
+                html = "<div class=\"alert\">"
             else:
-                html += "<font color=\"#%s\">" % self.COLORS["message"]
+                html = "<div class=\"message\">"
+
+            html += "<span class=\"time\">[%s]</span> " % created.toLocalTime().toString(createdFormat)
 
             if message.is_by_current_user():
-                html += "<font color=\"#%s\">" % self.COLORS["nickSelf"]
-            elif alert:
-                html += "<font color=\"#%s\">" % self.COLORS["nickAlert"]
+                html += "<span class=\"author self\">"
             else:
-                html += "<font color=\"#%s\">" % self.COLORS["nick"]
+                html += "<span class=\"author\">"
 
-            html += "%s" % ("<strong>%s</strong>" % user if alert else user)
-            html += "</font>: "
+            html += "%s" % user
+            html += "</span>: "
             html += body
-            html += "</font>"
+            html += "</div>"
         elif message.is_upload():
-            html = "<font color=\"#%s\">" % self.COLORS["upload"]
+            html = "<div class=\"upload\">"
             html += self._displayUpload(user, message)
-            html += "</font>"
+            html += "</div>"
         elif message.is_topic_change():
-            html = "<font color=\"#%s\">" % self.COLORS["leave"]
-            html += "%s changed topic to <strong>%s</strong>" % (user, message.body)
-            html += "</font>"
+            html = "<div class=\"topic\">"
+            html += "%s changed topic to <span class=\"new_topic\">%s</span>" % (user, message.body)
+            html += "</div>"
 
         if html:
-            html = "%s<br />" % html
             view = self._rooms[room.id]["view"]
             frame = self._rooms[room.id]["frame"]
             if not view and frame:
@@ -473,8 +458,8 @@ class Snakefire(object):
             if self._rooms[room.id]["newMessages"] > 0:
                 tabBar.setTabText(tabIndex, "%s (%s)" % (room.name, self._rooms[room.id]["newMessages"]))
 
-            if not isActiveTab and (alert or self._rooms[room.id]["newMessages"] > 0) and tabBar.tabTextColor(tabIndex) == self.COLORS["tabs"]["normal"]:
-                tabBar.setTabTextColor(tabIndex, self.COLORS["tabs"]["alert" if alert else "new"])
+            if not isActiveTab and (alert or self._rooms[room.id]["newMessages"] > 0) and tabBar.tabTextColor(tabIndex) == self.COLORS["normal"]:
+                tabBar.setTabTextColor(tabIndex, self.COLORS["alert" if alert else "new"])
 
             notifyInactiveTab = self.getSetting("alerts", "notify_inactive_tab")
 
@@ -734,8 +719,8 @@ class Snakefire(object):
             self._rooms[room.id]["newMessages"] = 0
             tabBar.setTabText(tabIndex, room.name)
 
-        if tabBar.tabTextColor(tabIndex) != self.COLORS["tabs"]["normal"]:
-            tabBar.setTabTextColor(tabIndex, self.COLORS["tabs"]["normal"])
+        if tabBar.tabTextColor(tabIndex) != self.COLORS["normal"]:
+            tabBar.setTabTextColor(tabIndex, self.COLORS["normal"])
 
         self._updateRoomLayout()
 
@@ -902,10 +887,10 @@ class Snakefire(object):
         index = self._tabs.addTab(splitter, room.name)
         self._tabs.setCurrentIndex(index)
 
-        if not self.COLORS["tabs"]["normal"]:
-            self.COLORS["tabs"]["normal"] = self._tabs.tabBar().tabTextColor(index)
+        if not self.COLORS["normal"]:
+            self.COLORS["normal"] = self._tabs.tabBar().tabTextColor(index)
         else:
-            self._tabs.tabBar().setTabTextColor(index, self.COLORS["tabs"]["normal"])
+            self._tabs.tabBar().setTabTextColor(index, self.COLORS["normal"])
 
         return {
             "tab": index,
@@ -1130,6 +1115,7 @@ def debug_trace():
 class SnakeFireWebView(QWebView):
     def __init__(self, snakefire, parent=None):
         QWebView.__init__(self, parent)
+        self.settings().setUserStyleSheetUrl(QtCore.QUrl.fromLocalFile(os.getcwd() + "/resources/themes/default.css"))
         self.snakeFire = snakefire
 
     def dragEnterEvent(self, event): 
