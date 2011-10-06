@@ -1,14 +1,16 @@
+import base64
 import copy
 import datetime
 import os
 import re
 import sys
+import tempfile
 import urllib2
-import base64
 import webbrowser
 
 from snakefire import GNOME_ENABLED, KDE_ENABLED, XFCE_ENABLED
 
+from PIL import Image
 from PyQt4 import Qt
 from PyQt4 import QtGui
 from PyQt4 import QtCore
@@ -363,6 +365,11 @@ class Snakefire(object):
         ):
             return
 
+        view = self._rooms[room.id]["view"]
+        frame = self._rooms[room.id]["frame"]
+        if not view and frame:
+            return
+
         user = message.user.name
         notify = True
         alert = False
@@ -393,7 +400,7 @@ class Snakefire(object):
             elif message.is_paste():
                 body = "<div class=\"paste\">%s</div>" % body
             elif message.is_upload():
-                body = "<div class=\"upload\">%s</div>" % self._displayUpload(user, message)
+                body = "<div class=\"upload\">%s</div>" % self._displayUpload(view, user, message)
             else:
                 body = self._autoLink(body)
 
@@ -433,11 +440,6 @@ class Snakefire(object):
             html += "</div>"
 
         if html:
-            view = self._rooms[room.id]["view"]
-            frame = self._rooms[room.id]["frame"]
-            if not view and frame:
-                return
-
             currentScrollbarValue = frame.scrollPosition()
             autoScroll = (currentScrollbarValue == frame.scrollBarMaximum(QtCore.Qt.Vertical))
             frame.setHtml(frame.toHtml() + html)
@@ -476,22 +478,38 @@ class Snakefire(object):
             elif message.is_topic_change() and not message.is_by_current_user():
                 self._cfTopicChanged(room, message.body)
 
-    def _fetchImage(self, url):
-        request = urllib2.Request(url)
-        auth_header = base64.encodestring('{}:{}'.format(self._worker.getApiToken(), 'X')).replace('\n', '')
-        request.add_header("Authorization", "Basic {}".format(auth_header))
-        result = urllib2.urlopen(request)
-        return result.read()
-
-    def _displayUpload(self, user, message):
+    def _displayUpload(self, view, user, message):
+        image = None
         if message.upload['content_type'].startswith("image/"):
-            image_data = base64.encodestring(self._fetchImage(message.upload['url']))
+            try:
+                request = urllib2.Request(message.upload['url'])
+                auth_header = base64.encodestring('{}:{}'.format(self._worker.getApiToken(), 'X')).replace('\n', '')
+                request.add_header("Authorization", "Basic {}".format(auth_header))
+                image = urllib2.urlopen(request).read()
+            except:
+                pass
+
+        if image:
+            width = None
+            try:
+                imageFile = tempfile.NamedTemporaryFile('w+b')
+                imageFile.write(image)
+                (width, height) = Image.open(imageFile.name).size
+                imageFile.close()
+
+                maximumImageWidth = int(view.size().width() * 0.7) # 70% of viewport
+                if width > maximumImageWidth:
+                    width = maximumImageWidth
+            except:
+                pass
+
             html = "<br />"
-            html += "<a href=\"{url}\"><img src=\"data:image/{image_type};base64,{image_data}\" \></a>".format(
+            html += "<a href=\"{url}\"><img src=\"data:image/{image_type};base64,{image_data}\" {width}\></a>".format(
                 image_type=message.upload['content_type'],
-                image_data=image_data,
+                image_data=base64.encodestring(image),
                 url=message.upload['url'],
-                name=message.upload['name']
+                name=message.upload['name'],
+                width="width=\"{width}\" ".format(width=width) if width else ""
             )
         else:
             html = "<a href=\"{url}\">{name}</a>".format(
