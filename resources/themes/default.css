@@ -43,15 +43,15 @@ body {
     color: #c0c0c0;
 }
 
-.nick {
+.author {
     color: #808080;
 }
 
-.alert .nick {
+.alert .author {
     color: #ff0000;
 }
 
-.nick.self {
+.author.self {
     color: #000080;
 }
 
