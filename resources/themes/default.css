@@ -1,5 +1,6 @@
 body {
-    font-size: 14px;
+    font: Arial, Helvetica, sans-serif, Lucida, Geneva
+    font-size: 1em;
 }
 
 .message {
@@ -26,6 +27,7 @@ body {
     margin-top: 5px;
     margin-bottom: 5px;
     padding: 10px;
+    font: Courier, Courier New, Verdana, monospace;
     border: 1px solid black;
     background: #efefef;
 }
