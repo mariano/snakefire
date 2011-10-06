@@ -833,7 +833,7 @@ class Snakefire(object):
         view.connect(view, QtCore.SIGNAL("linkClicked (const QUrl&)"), linkClicked)
 
         # Support auto scroll when needed
-        def autoScroll(size): frame.scroll(size.width(), size.height())
+        def autoScroll(size): frame.scroll(0, size.height())
         frame.connect(frame, QtCore.SIGNAL("contentsSizeChanged (const QSize&)"), autoScroll)
 
         usersList = QtGui.QListWidget()
