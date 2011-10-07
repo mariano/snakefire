@@ -1,5 +1,5 @@
 body {
-    font: Arial, Helvetica, sans-serif, Lucida, Geneva
+    font-family: Arial, Helvetica, sans-serif, Lucida, Geneva;
     font-size: 1em;
 }
 
@@ -27,7 +27,7 @@ body {
     margin-top: 5px;
     margin-bottom: 5px;
     padding: 10px;
-    font: Courier, Courier New, Verdana, monospace;
+    font-family: Courier, Courier New, Verdana, monospace;
     border: 1px solid black;
     background: #efefef;
 }
