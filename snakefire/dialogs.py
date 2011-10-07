@@ -129,7 +129,7 @@ class OptionsDialog(QtGui.QDialog):
         alertsGrid.addWidget(QtGui.QLabel(self._mainFrame._("Matches:"), self), 2, 0)
         alertsGrid.addWidget(self._matchesField, 2, 1)
 
-        alertsGroupBox = QtGui.QGroupBox(self._mainFrame._("Alerts & Notifications"))
+        alertsGroupBox = QtGui.QGroupBox(self._mainFrame._("Alerts && Notifications"))
         alertsGroupBox.setLayout(alertsGrid)
          
         # Buttons

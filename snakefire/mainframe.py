@@ -44,6 +44,7 @@ class Snakefire(object):
 
     def __init__(self):
         self.DESCRIPTION = self._(self.DESCRIPTION)
+        self._pingTimer = None
         self._worker = None
         self._settings = {}
         self._canConnect = False
@@ -53,6 +54,8 @@ class Snakefire(object):
         self.setWindowIcon(self._icon)
         self.setAcceptDrops(True)
         self._setupUI()
+        self._pingTimer = QtCore.QTimer(self)
+        self.connect(self._pingTimer, QtCore.SIGNAL("timeout()"), self.ping)
 
         settings = self.getSettings("connection")
 
@@ -255,7 +258,7 @@ class Snakefire(object):
             for roomId in self._rooms.keys():
                 if roomId in self._rooms and self._rooms[roomId]["room"]:
                     self._worker.leave(self._rooms[roomId]["room"], False)
-                    
+         
         self._cfDisconnected()
         self._updateLayout()
 
@@ -283,6 +286,13 @@ class Snakefire(object):
             "newMessages": 0
         }
         self._getWorker().join(room["id"])
+
+    def ping(self):
+        if not self._connected:
+            return
+        for roomId in self._rooms.keys():
+            if roomId in self._rooms and self._rooms[roomId]["room"]:
+                self.updateRoomUsers(roomId, pinging=True)
 
     def speak(self):
         message = self._editor.document().toPlainText()
@@ -333,14 +343,15 @@ class Snakefire(object):
             self.statusBar().showMessage(self._("Changing topic for room %s...") % room.name)
             self._getWorker().changeTopic(room, topic)
 
-    def updateRoomUsers(self, roomId = None):
+    def updateRoomUsers(self, roomId = None, pinging = False):
         if not roomId:
             room = self.getCurrentRoom()
             if room:
                 roomId = room.id
         if roomId in self._rooms:
-            self.statusBar().showMessage(self._("Getting users in %s...") % self._rooms[roomId]["room"].name)
-            self._getWorker().users(self._rooms[roomId]["room"])
+            if not pinging:
+                self.statusBar().showMessage(self._("Getting users in %s...") % self._rooms[roomId]["room"].name)
+            self._getWorker().users(self._rooms[roomId]["room"], pinging)
 
     def updateRoomUploads(self, roomId = None):
         if not roomId:
@@ -543,6 +554,7 @@ class Snakefire(object):
 
         self.statusBar().showMessage(self._("%s connected to Campfire") % user.name, 5000)
         self._updateLayout()
+        self._pingTimer.start(60000); # Ping every minute
 
         if self.getSetting("connection", "join"):
             rooms = self.getSetting("connection", "rooms")
@@ -565,6 +577,8 @@ class Snakefire(object):
                             self.joinRoom(roomIndex)
 
     def _cfDisconnected(self):
+        if self._pingTimer:
+            self._pingTimer.stop()
         self._connecting = False
         self._connected = False
         self._rooms = {}
@@ -603,12 +617,13 @@ class Snakefire(object):
         self.statusBar().showMessage(self._("Left room %s") % room.name, 5000)
         self._updatedRoomsList()
 
-    def _cfRoomUsers(self, room, users):
+    def _cfRoomUsers(self, room, users, pinging=False):
         # We may be disconnecting while still processing the list
         if not room.id in self._rooms:
             return
 
-        self.statusBar().clearMessage()
+        if not pinging:
+            self.statusBar().clearMessage()
         self._rooms[room.id]["usersList"].clear()
         for user in users:
             item = QtGui.QListWidgetItem(user["name"])
@@ -751,7 +766,7 @@ class Snakefire(object):
         self.connect(worker, QtCore.SIGNAL("spoke(PyQt_PyObject, PyQt_PyObject)"), self._cfSpoke)
         self.connect(worker, QtCore.SIGNAL("streamMessage(PyQt_PyObject, PyQt_PyObject, PyQt_PyObject)"), self._cfStreamMessage)
         self.connect(worker, QtCore.SIGNAL("left(PyQt_PyObject)"), self._cfRoomLeft)
-        self.connect(worker, QtCore.SIGNAL("users(PyQt_PyObject, PyQt_PyObject)"), self._cfRoomUsers)
+        self.connect(worker, QtCore.SIGNAL("users(PyQt_PyObject, PyQt_PyObject, PyQt_PyObject)"), self._cfRoomUsers)
         self.connect(worker, QtCore.SIGNAL("uploads(PyQt_PyObject, PyQt_PyObject)"), self._cfRoomUploads)
         self.connect(worker, QtCore.SIGNAL("uploadProgress(PyQt_PyObject, PyQt_PyObject, PyQt_PyObject)"), self._cfUploadProgress)
         self.connect(worker, QtCore.SIGNAL("uploadFinished(PyQt_PyObject)"), self._cfUploadFinished)

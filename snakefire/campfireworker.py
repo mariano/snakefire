@@ -57,9 +57,9 @@ class CampfireWorker(QtCore.QThread):
         else:
             self._leave(room)
 
-    def users(self, room):
+    def users(self, room, pinging=False):
         self._action = "_users"
-        self._actionArgs = [room]
+        self._actionArgs = [room, pinging]
         self.start()
 
     def upload(self, room, path):
@@ -135,11 +135,17 @@ class CampfireWorker(QtCore.QThread):
             live
         )
 
-    def _users(self, room):
-        self.emit(QtCore.SIGNAL("users(PyQt_PyObject, PyQt_PyObject)"),
-            room,
-            room.get_users()
-        )
+    def _users(self, room, pinging=False):
+        try:
+            self.emit(QtCore.SIGNAL("users(PyQt_PyObject, PyQt_PyObject, PyQt_PyObject)"),
+                room,
+                room.get_users(),
+                pinging
+            )
+        except Exception as e:
+            if pinging:
+                return
+            raise e
 
     def _uploadError(self, e, room):
         self.emit(QtCore.SIGNAL("uploadError(PyQt_PyObject, PyQt_PyObject)"), e, room)
