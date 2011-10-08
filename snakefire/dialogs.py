@@ -1,5 +1,6 @@
 from PyQt4 import QtCore
 from PyQt4 import QtGui
+from PyQt4 import QtWebKit
 
 class AlertsDialog(QtGui.QDialog):
     def __init__(self, mainFrame):
@@ -56,6 +57,7 @@ class OptionsDialog(QtGui.QDialog):
             "minimize": self._minimizeField.isChecked()
         }
         displaySettings = {
+            "theme": self._themeField.itemData(self._themeField.currentIndex()).toString(),
             "show_join_message": self._showJoinMessageField.isChecked(),
             "show_part_message": self._showPartMessageField.isChecked()
         }
@@ -68,6 +70,69 @@ class OptionsDialog(QtGui.QDialog):
         self._mainFrame.setSettings("program", programSettings)
         self._mainFrame.setSettings("display", displaySettings)
         self._mainFrame.setSettings("alerts", alertsSettings)
+
+    def _themeSelected(self):
+        self._themePreview.settings().setUserStyleSheetUrl(QtCore.QUrl.fromLocalFile(":/themes/{theme}.css".format(
+            theme = self._themeField.itemData(self._themeField.currentIndex()).toString()
+        )))
+
+    def _setupThemesUI(self, displaySettings):
+        children = QtCore.QResource(':/themes').children()
+        children.sort()
+
+        currentIndex = None
+        index = 0
+        for theme in children:
+            themeName = str(theme.replace(QtCore.QRegExp('\.css$'), ''))
+            self._themeField.addItem(themeName.replace('_', ' ').title(), themeName)
+            if themeName == displaySettings["theme"]:
+                currentIndex = index
+            index += 1
+
+        if currentIndex is not None:
+            self._themeField.setCurrentIndex(currentIndex)
+
+        # Load preview content
+
+        messages = [
+            self._mainFrame.MESSAGES['join'].format(user='John Doe', room='Snakefire'),
+            self._mainFrame.MESSAGES['message_self'].format(time='3:33 pm', user='John Doe', message='Hey everyone!'),
+            self._mainFrame.MESSAGES['message_self'].format(time='3:33 pm', user='John Doe', message='How are you all doing?'),
+            self._mainFrame.MESSAGES['alert'].format(time='3:34 pm', user='Jane Doe', message='Hi John Doe! Nice to see you here'),
+            self._mainFrame.MESSAGES['tweet'].format(url_user='#', user='@mgiglesias', url='#', message='Hello world from twitter :)'),
+            self._mainFrame.MESSAGES['message_self'].format(time='3:35 pm', user='John Doe', message='Look at this method:'),
+            self._mainFrame.MESSAGES['paste'].format(message='def hello(self):<br />  print "Hello World"'),
+            self._mainFrame.MESSAGES['topic'].format(user='Jane Doe', topic='Testing Snakefire, and loving it'),
+            self._mainFrame.MESSAGES['message'].format(time='3:36 pm', user='Jane Doe', message='Looks good. Now look at this upload:'),
+            self._mainFrame.MESSAGES['message'].format(time='3:36 pm', user='Jane Doe', 
+                message = self._mainFrame.MESSAGES['upload'].format(url='#', name='my_upload.tar.gz')
+            )
+        ]
+
+        image = QtGui.QImage(":/icons/join.png")
+        buffer = QtCore.QBuffer()
+        if buffer.open(QtCore.QIODevice.WriteOnly) and image.save(buffer, 'PNG'):
+            messages.extend([
+                self._mainFrame.MESSAGES['message_self'].format(time='3:38 pm', user='John Doe', message='Look at this image:'),
+                self._mainFrame.MESSAGES['message_self'].format(time='3:38 pm', user='John Doe', message=self._mainFrame.MESSAGES['image'].format(
+                    url = '#',
+                    type = 'image/png',
+                    data = buffer.data().toBase64().data(),
+                    name = 'image.png',
+                    attribs = ''
+                ))
+            ])
+
+        messages.extend([
+            self._mainFrame.MESSAGES['leave'].format(user='Jane Doe', room='Snakefire'),
+            self._mainFrame.MESSAGES['message_self'].format(time='3:37 pm', user='John Doe', message='I guess I am all alone now :('),
+        ])
+
+        self._themePreview.page().mainFrame().setHtml("\n".join(messages))
+        self._themePreview.show()
+        self._themeSelected()
+
+        self.connect(self._themeField, QtCore.SIGNAL("currentIndexChanged(const QString&)"), self._themeSelected)
 
     def _setupUI(self):
         # Connection group
@@ -108,17 +173,6 @@ class OptionsDialog(QtGui.QDialog):
         programGroupBox = QtGui.QGroupBox(self._mainFrame._("Program settings"))
         programGroupBox.setLayout(programGrid)
 
-        # Display group
-        self._showJoinMessageField = QtGui.QCheckBox(self._mainFrame._("&Show join messages"), self)
-        self._showPartMessageField = QtGui.QCheckBox(self._mainFrame._("&Show part messages"), self)
-        
-        displayGrid = QtGui.QGridLayout()
-        displayGrid.addWidget(self._showJoinMessageField, 1, 0)
-        displayGrid.addWidget(self._showPartMessageField, 2, 0)
-
-        displayGroupBox = QtGui.QGroupBox(self._mainFrame._("Display settings"))
-        displayGroupBox.setLayout(displayGrid)
-
         # Alert group
         
         self._notifyOnInactiveTabField = QtGui.QCheckBox(self._mainFrame._("&Notify on inactive messages"), self)
@@ -131,6 +185,59 @@ class OptionsDialog(QtGui.QDialog):
 
         alertsGroupBox = QtGui.QGroupBox(self._mainFrame._("Alerts && Notifications"))
         alertsGroupBox.setLayout(alertsGrid)
+
+        # Theme group
+
+        self._themeField = QtGui.QComboBox(self)
+        self._themePreview = QtWebKit.QWebView(self)
+
+        themeGrid = QtGui.QGridLayout()
+        themeGrid.addWidget(self._themeField, 1, 0)
+        themeGrid.addWidget(self._themePreview, 2, 0)
+
+        themeGroupBox = QtGui.QGroupBox(self._mainFrame._("Theme"))
+        themeGroupBox.setLayout(themeGrid)
+
+        # Events group
+
+        self._showJoinMessageField = QtGui.QCheckBox(self._mainFrame._("&Show join messages"), self)
+        self._showPartMessageField = QtGui.QCheckBox(self._mainFrame._("&Show part messages"), self)
+        
+        eventsGrid = QtGui.QGridLayout()
+        eventsGrid.addWidget(self._showJoinMessageField, 1, 0)
+        eventsGrid.addWidget(self._showPartMessageField, 2, 0)
+
+        eventsGroupBox = QtGui.QGroupBox(self._mainFrame._("Display events"))
+        eventsGroupBox.setLayout(eventsGrid)
+
+        # Options tab
+
+        optionsBox = QtGui.QVBoxLayout()
+        optionsBox.addWidget(connectionGroupBox)
+        optionsBox.addWidget(programGroupBox)
+        optionsBox.addWidget(alertsGroupBox)
+        optionsBox.addStretch(1)
+
+        optionsFrame = QtGui.QWidget()
+        optionsFrame.setLayout(optionsBox)
+
+        # Display tab
+
+        displayGrid = QtGui.QGridLayout()
+        displayGrid.setSpacing(10)
+        displayGrid.addWidget(themeGroupBox, 1, 0)
+        displayGrid.addWidget(eventsGroupBox, 2, 0)
+
+        displayFrame = QtGui.QWidget()
+        displayFrame.setLayout(displayGrid)
+
+        # Tabs
+
+        tabs = QtGui.QTabWidget()
+        tabs.setTabsClosable(False)
+
+        tabs.addTab(optionsFrame, self._mainFrame._("&Program options"))
+        tabs.addTab(displayFrame, self._mainFrame._("&Display options"))
          
         # Buttons
 
@@ -142,21 +249,15 @@ class OptionsDialog(QtGui.QDialog):
 
         # Main layout
 
-        grid = QtGui.QGridLayout()
-        grid.setSpacing(10)
-        grid.addWidget(connectionGroupBox, 1, 0)
-        grid.addWidget(programGroupBox, 2, 0)
-        grid.addWidget(displayGroupBox, 3, 0)
-        grid.addWidget(alertsGroupBox, 4, 0)
-
         hbox = QtGui.QHBoxLayout()
         hbox.addStretch(1)
         hbox.addWidget(self._okButton)
         hbox.addWidget(self._cancelButton)
 
         vbox = QtGui.QVBoxLayout()
-        vbox.addLayout(grid)
+        vbox.addWidget(tabs)
         vbox.addLayout(hbox)
+
         self.setLayout(vbox)
 
         # Load settings
@@ -174,9 +275,11 @@ class OptionsDialog(QtGui.QDialog):
         self._connectField.setChecked(connectionSettings["connect"])
         self._joinField.setChecked(connectionSettings["join"])
         self._minimizeField.setChecked(programSettings["minimize"])
-        self._showJoinMessageField.setChecked(displaySettings["show_join_message"])
-        self._showPartMessageField.setChecked(displaySettings["show_part_message"])
         self._notifyOnInactiveTabField.setChecked(alertsSettings["notify_inactive_tab"])
         self._matchesField.setText(alertsSettings["matches"])
 
+        self._showJoinMessageField.setChecked(displaySettings["show_join_message"])
+        self._showPartMessageField.setChecked(displaySettings["show_part_message"])
+
+        self._setupThemesUI(displaySettings)
         self.validate()

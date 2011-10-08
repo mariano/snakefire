@@ -7,4 +7,8 @@
 	<file>icons/disconnect.png</file>
 	<file>icons/join.png</file>
 </qresource>
+<qresource prefix="/themes">
+	<file>default.css</file>
+	<file>terminal.css</file>
+</qresource>
 </RCC>

@@ -43,13 +43,13 @@ class Snakefire(object):
     }
     MESSAGES = {
         "alert": '<div class="alert"><span class="time">[{time}]</span> <span class="author">{user}</span>: {message}</div>',
-        "image": '<div class="upload image"><a href="{url}"><img src="data:image/{type};base64,{data}" alt="{name}" {attribs} /></a></div>',
+        "image": '<span class="upload image"><a href="{url}"><img src="data:image/{type};base64,{data}" title="{name}" {attribs} /></a></span>',
         "join": '<div class="joined">--&gt; {user} joined {room}</div>',
         "leave": '<div class="left">&lt;-- {user} has left {room}</div>',
         "message_self": '<div class="message"><span class="time">[{time}]</span> <span class="author self">{user}</span>: {message}</div>',
         "message": '<div class="message"><span class="time">[{time}]</span> <span class="author">{user}</span>: {message}</div>',
         "paste": '<div class="paste">{message}</div>',
-        "upload": '<div class="upload"><a href="{url}">{name}</a></div>',
+        "upload": '<span class="upload"><a href="{url}">{name}</a></span>',
         "topic": '<div class="topic">{user} changed topic to <span class="new_topic">{topic}</span></div>',
         "tweet": '<div class="tweet"><a href="{url_user}">{user}</a> <a href="{url}">tweeted</a>: {message}</div>'
     }
@@ -143,6 +143,7 @@ class Snakefire(object):
                 "minimize": False
             },
             "display": {
+                "theme": "default",
                 "show_join_message": True,
                 "show_part_message": True
             },
@@ -204,6 +205,10 @@ class Snakefire(object):
             if settings["subdomain"] and settings["user"] and settings["password"]:
                 self._canConnect = True
             self._updateLayout()
+        elif group == "display":
+            for roomId in self._rooms.keys():
+                if roomId in self._rooms and self._rooms[roomId]["view"]:
+                    self._rooms[roomId]["view"].updateTheme(settings["theme"])
 
     def exit(self):
         self._forceClose = True
@@ -1130,11 +1135,16 @@ def debug_trace():
 class SnakeFireWebView(QtWebKit.QWebView):
     def __init__(self, snakefire, parent=None):
         QtWebKit.QWebView.__init__(self, parent)
-        self.settings().setUserStyleSheetUrl(QtCore.QUrl.fromLocalFile(os.getcwd() + "/resources/themes/default.css"))
-        self.snakeFire = snakefire
+        self.snakefire = snakefire
+        self.updateTheme()
+
+    def updateTheme(self, theme = None):
+        self.settings().setUserStyleSheetUrl(QtCore.QUrl.fromLocalFile(":/themes/{theme}.css".format(
+            theme = theme if theme else self.snakefire.getSetting("display", "theme")
+        )))
 
     def dragEnterEvent(self, event): 
-        return self.snakeFire.dragEnterEvent(event)        
+        return self.snakefire.dragEnterEvent(event)        
 
     def dropEvent(self, event):
-        return self.snakeFire.dropEvent(event)
+        return self.snakefire.dropEvent(event)
