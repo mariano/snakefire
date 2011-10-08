@@ -45,6 +45,8 @@ class OptionsDialog(QtGui.QDialog):
         return isValid
 
     def _save(self):
+        (themeSize, themeSizeOk) = self._themeSizeField.itemData(self._themeSizeField.currentIndex()).toInt()
+
         connectionSettings = {
             "subdomain": str(self._subdomainField.text().trimmed()),
             "user": str(self._usernameField.text().trimmed()),
@@ -58,6 +60,7 @@ class OptionsDialog(QtGui.QDialog):
         }
         displaySettings = {
             "theme": self._themeField.itemData(self._themeField.currentIndex()).toString(),
+            "size": themeSize if themeSizeOk else 100,
             "show_join_message": self._showJoinMessageField.isChecked(),
             "show_part_message": self._showPartMessageField.isChecked()
         }
@@ -76,7 +79,14 @@ class OptionsDialog(QtGui.QDialog):
             theme = self._themeField.itemData(self._themeField.currentIndex()).toString()
         )))
 
+    def _themeSizeSelected(self):
+        (value, ok) = self._themeSizeField.itemData(self._themeSizeField.currentIndex()).toInt()
+        if ok:
+            self._themePreview.setTextSizeMultiplier(round(float(value) / 100, 1))
+
     def _setupThemesUI(self, displaySettings):
+        # Themes
+
         children = QtCore.QResource(':/themes').children()
         children.sort()
 
@@ -91,6 +101,19 @@ class OptionsDialog(QtGui.QDialog):
 
         if currentIndex is not None:
             self._themeField.setCurrentIndex(currentIndex)
+
+        # Theme sizes
+
+        currentIndex = None
+        index = 0
+        for size in [ x for x in range(50, 160, 10) ]:
+            self._themeSizeField.addItem("{n}%".format(n=size), size)
+            if size == int(displaySettings["size"]):
+                currentIndex = index
+            index += 1
+
+        if currentIndex is not None:
+            self._themeSizeField.setCurrentIndex(currentIndex)
 
         # Load preview content
 
@@ -131,8 +154,10 @@ class OptionsDialog(QtGui.QDialog):
         self._themePreview.page().mainFrame().setHtml("\n".join(messages))
         self._themePreview.show()
         self._themeSelected()
+        self._themeSizeSelected()
 
         self.connect(self._themeField, QtCore.SIGNAL("currentIndexChanged(const QString&)"), self._themeSelected)
+        self.connect(self._themeSizeField, QtCore.SIGNAL("currentIndexChanged(const QString&)"), self._themeSizeSelected)
 
     def _setupUI(self):
         # Connection group
@@ -189,10 +214,21 @@ class OptionsDialog(QtGui.QDialog):
         # Theme group
 
         self._themeField = QtGui.QComboBox(self)
+        self._themeSizeField = QtGui.QComboBox(self)
         self._themePreview = QtWebKit.QWebView(self)
 
+        themeSelectorBox = QtGui.QHBoxLayout()
+        themeSelectorBox.addWidget(QtGui.QLabel(self._mainFrame._("Theme:")))
+        themeSelectorBox.addWidget(self._themeField)
+        themeSelectorBox.addWidget(QtGui.QLabel(self._mainFrame._("Text size:")))
+        themeSelectorBox.addWidget(self._themeSizeField)
+        themeSelectorBox.addStretch(1)
+
+        themeSelectorFrame = QtGui.QWidget()
+        themeSelectorFrame.setLayout(themeSelectorBox)
+
         themeGrid = QtGui.QGridLayout()
-        themeGrid.addWidget(self._themeField, 1, 0)
+        themeGrid.addWidget(themeSelectorFrame, 1, 0)
         themeGrid.addWidget(self._themePreview, 2, 0)
 
         themeGroupBox = QtGui.QGroupBox(self._mainFrame._("Theme"))

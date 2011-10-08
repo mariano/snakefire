@@ -144,6 +144,7 @@ class Snakefire(object):
             },
             "display": {
                 "theme": "default",
+                "size": 100,
                 "show_join_message": True,
                 "show_part_message": True
             },
@@ -208,7 +209,7 @@ class Snakefire(object):
         elif group == "display":
             for roomId in self._rooms.keys():
                 if roomId in self._rooms and self._rooms[roomId]["view"]:
-                    self._rooms[roomId]["view"].updateTheme(settings["theme"])
+                    self._rooms[roomId]["view"].updateTheme(settings["theme"], settings["size"])
 
     def exit(self):
         self._forceClose = True
@@ -1138,10 +1139,11 @@ class SnakeFireWebView(QtWebKit.QWebView):
         self.snakefire = snakefire
         self.updateTheme()
 
-    def updateTheme(self, theme = None):
+    def updateTheme(self, theme = None, size=None):
         self.settings().setUserStyleSheetUrl(QtCore.QUrl.fromLocalFile(":/themes/{theme}.css".format(
             theme = theme if theme else self.snakefire.getSetting("display", "theme")
         )))
+        self.setTextSizeMultiplier(round(float(size if size else self.snakefire.getSetting("display", "size")) / 100, 1))
 
     def dragEnterEvent(self, event): 
         return self.snakefire.dragEnterEvent(event)        
