@@ -14,7 +14,7 @@ from PIL import Image
 from PyQt4 import Qt
 from PyQt4 import QtGui
 from PyQt4 import QtCore
-from PyQt4.QtWebKit import QWebView, QWebPage
+from PyQt4 import QtWebKit
 
 if KDE_ENABLED:
     from PyKDE4 import kdecore
@@ -40,6 +40,18 @@ class Snakefire(object):
         "normal": None,
         "new": QtGui.QColor(0, 0, 255),
         "alert": QtGui.QColor(255, 0, 0)
+    }
+    MESSAGES = {
+        "alert": '<div class="alert"><span class="time">[{time}]</span> <span class="author">{user}</span>: {message}</div>',
+        "image": '<div class="upload image"><a href="{url}"><img src="data:image/{type};base64,{data}" alt="{name}" {attribs} /></a></div>',
+        "join": '<div class="joined">--&gt; {user} joined {room}</div>',
+        "leave": '<div class="left">&lt;-- {user} has left {room}</div>',
+        "message_self": '<div class="message"><span class="time">[{time}]</span> <span class="author self">{user}</span>: {message}</div>',
+        "message": '<div class="message"><span class="time">[{time}]</span> <span class="author">{user}</span>: {message}</div>',
+        "paste": '<div class="paste">{message}</div>',
+        "upload": '<div class="upload"><a href="{url}">{name}</a></div>',
+        "topic": '<div class="topic">{user} changed topic to <span class="new_topic">{topic}</span></div>',
+        "tweet": '<div class="tweet"><a href="{url_user}">{user}</a> <a href="{url}">tweeted</a>: {message}</div>'
     }
 
     def __init__(self):
@@ -390,28 +402,24 @@ class Snakefire(object):
 
         html = None
         if message.is_joining() and self.getSetting("display", "show_join_message"):
-            html = "<div class=\"joined\">"
-            html += "--&gt; %s joined %s" % (user, room.name)
-            html += "</div>"
+            html = self.MESSAGES["join"].format(user=user, room=room.name)
         elif message.is_leaving() and self.getSetting("display", "show_join_message"):
-            html = "<div class=\"left\">"
-            html += "&lt;-- %s has left %s" % (user, room.name)
-            html += "</div>"
+            html = self.MESSAGES["leave"].format(user=user, room=room.name)
         elif message.is_text() or message.is_upload():
             if message.body:
                 body = self._plainTextToHTML(message.tweet["tweet"] if message.is_tweet() else message.body)
 
             if message.is_tweet():
-                body = "<div class=\"tweet\"><a href=\"%s\">%s</a> <a href=\"%s\">tweeted</a>: %s</div>" % (
-                    "http://twitter.com/%s" % message.tweet["user"],
-                    message.tweet["user"], 
-                    message.tweet["url"],
-                    body
+                body = self.MESSAGES["tweet"].format(
+                    url_user = "http://twitter.com/%s" % message.tweet["user"],
+                    user = message.tweet["user"], 
+                    url = message.tweet["url"],
+                    message = body
                 )
             elif message.is_paste():
-                body = "<div class=\"paste\">%s</div>" % body
+                body = self.MESSAGES["paste"].format(message=body)
             elif message.is_upload():
-                body = "<div class=\"upload\">%s</div>" % self._displayUpload(view, user, message)
+                body = self._displayUpload(view, user, message)
             else:
                 body = self._autoLink(body)
 
@@ -429,26 +437,19 @@ class Snakefire(object):
             if created.daysTo(QtCore.QDateTime.currentDateTime()):
                 createdFormat = "MMM d,  %s" % createdFormat
 
-            if alert:
-                html = "<div class=\"alert\">"
-            else:
-                html = "<div class=\"message\">"
-
-            html += "<span class=\"time\">[%s]</span> " % created.toLocalTime().toString(createdFormat)
-
+            key = "message"
             if message.is_by_current_user():
-                html += "<span class=\"author self\">"
-            else:
-                html += "<span class=\"author\">"
+                key = "message_self"
+            elif alert:
+                key = "alert"
 
-            html += "%s" % user
-            html += "</span>: "
-            html += body
-            html += "</div>"
+            html = self.MESSAGES[key].format(
+                time = created.toLocalTime().toString(createdFormat),
+                user = user,
+                message = body
+            )
         elif message.is_topic_change():
-            html = "<div class=\"topic\">"
-            html += "%s changed topic to <span class=\"new_topic\">%s</span>" % (user, message.body)
-            html += "</div>"
+            html = self.MESSAGES["topic"].format(user=user, topic=message.body)
 
         if html:
             currentScrollbarValue = frame.scrollPosition()
@@ -514,18 +515,17 @@ class Snakefire(object):
             except:
                 pass
 
-            html = "<br />"
-            html += "<a href=\"{url}\"><img src=\"data:image/{image_type};base64,{image_data}\" {width}\></a>".format(
-                image_type=message.upload['content_type'],
-                image_data=base64.encodestring(image),
-                url=message.upload['url'],
-                name=message.upload['name'],
-                width="width=\"{width}\" ".format(width=width) if width else ""
+            html = self.MESSAGES["image"].format(
+                type = message.upload['content_type'],
+                data = base64.encodestring(image),
+                url = message.upload['url'],
+                name = message.upload['name'],
+                attribs = "width=\"{width}\" ".format(width=width) if width else ""
             )
         else:
-            html = "<a href=\"{url}\">{name}</a>".format(
-                url=message.upload['url'],
-                name=message.upload['name']
+            html = self.MESSAGES["upload"].format(
+                url = message.upload['url'],
+                name = message.upload['name']
             )
         return html
         
@@ -843,7 +843,7 @@ class Snakefire(object):
         frame = view.page().mainFrame()
 
         #Send all link clicks to systems web browser
-        view.page().setLinkDelegationPolicy(QWebPage.DelegateAllLinks)
+        view.page().setLinkDelegationPolicy(QtWebKit.QWebPage.DelegateAllLinks)
         def linkClicked(url): webbrowser.open(str(url.toString()))
         view.connect(view, QtCore.SIGNAL("linkClicked (const QUrl&)"), linkClicked)
 
@@ -1127,9 +1127,9 @@ def debug_trace():
   pyqtremoveinputhook()
   set_trace()
 
-class SnakeFireWebView(QWebView):
+class SnakeFireWebView(QtWebKit.QWebView):
     def __init__(self, snakefire, parent=None):
-        QWebView.__init__(self, parent)
+        QtWebKit.QWebView.__init__(self, parent)
         self.settings().setUserStyleSheetUrl(QtCore.QUrl.fromLocalFile(os.getcwd() + "/resources/themes/default.css"))
         self.snakeFire = snakefire
 
