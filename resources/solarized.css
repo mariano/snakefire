@@ -1,20 +1,19 @@
 body {
-    font-family: Courier, Courier New, Verdana, monospace;
-    background: #000000;
-    color: #ffffff;
+    font-family: Arial, Helvetica, sans-serif, Lucida, Geneva;
+    background: #002b36;
 }
 
 a, a:link, a:visited {
-    color: #008000;
+    color: #b58900;
 }
 
 a:hover {
-    color: #00ff00;
+    color: #a9a900;
 }
 
 .message {
     clear: both;
-    color: #ffffff;
+    color: #fdf6e3;
 }
 
 .upload.image {
@@ -29,13 +28,13 @@ a:hover {
     margin-top: 5px;
     margin-bottom: 5px;
     padding: 5px;
-    color: #00ff00;
-    border: 1px solid #008000;
+    color: #cb4b16;
+    border: 1px solid #dc322f;
 }
 
 .joined, .left {
     clear: both;
-    color: #008e80;
+    color: #2aa198;
 }
 
 .paste {
@@ -44,40 +43,41 @@ a:hover {
     margin-bottom: 5px;
     padding: 10px;
     font-family: Courier, Courier New, Verdana, monospace;
-    border: 1px solid #808080;
-    background: #222222;
+    border: 1px solid #073642;
+    background: #839496;
+    color: #073642;
 }
 
 .topic {
     clear: both;
-    color: #808080;
+    color: #657b83;
 }
 
 .tweet {
     clear: both;
-    color: #000000;
+    color: #fdf6e3;
 }
 
 .upload {
     clear: both;
-    color: #000000;
+    color: #fdf6e3;
 }
 
 .time {
-    color: #c0c0c0;
+    color: #586e75;
 }
 
 .author {
-    color: #808080;
+    color: #fdf6e3;
 }
 
 .alert .author {
-    color: #00ff00;
+    color: #cb4b16;
     font-weight: bold;
 }
 
 .author.self {
-    color: #c0c0c0;
+    color: #268bd2;
 }
 
 .topic .new_topic {

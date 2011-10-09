@@ -1,14 +1,15 @@
 <!DOCTYPE RCC>
 <RCC version="1.0">
-<qresource prefix="/">
-	<file>icons/snakefire.png</file>
-	<file>icons/alerts.png</file>
-	<file>icons/connect.png</file>
-	<file>icons/disconnect.png</file>
-	<file>icons/join.png</file>
+<qresource prefix="/icons">
+	<file>snakefire.png</file>
+	<file>alerts.png</file>
+	<file>connect.png</file>
+	<file>disconnect.png</file>
+	<file>join.png</file>
 </qresource>
 <qresource prefix="/themes">
 	<file>default.css</file>
+	<file>solarized.css</file>
 	<file>terminal.css</file>
 </qresource>
 </RCC>

@@ -224,6 +224,9 @@ class OptionsDialog(QtGui.QDialog):
         themeSelectorBox.addWidget(self._themeSizeField)
         themeSelectorBox.addStretch(1)
 
+        themeSelectorBox.setContentsMargins(0, 0, 0, 0)
+        themeSelectorBox.setSpacing(5)
+
         themeSelectorFrame = QtGui.QWidget()
         themeSelectorFrame.setLayout(themeSelectorBox)
 
@@ -259,13 +262,13 @@ class OptionsDialog(QtGui.QDialog):
 
         # Display tab
 
-        displayGrid = QtGui.QGridLayout()
-        displayGrid.setSpacing(10)
-        displayGrid.addWidget(themeGroupBox, 1, 0)
-        displayGrid.addWidget(eventsGroupBox, 2, 0)
+        displayBox = QtGui.QVBoxLayout()
+        displayBox.addWidget(themeGroupBox)
+        displayBox.addWidget(eventsGroupBox)
+        displayBox.addStretch(1)
 
         displayFrame = QtGui.QWidget()
-        displayFrame.setLayout(displayGrid)
+        displayFrame.setLayout(displayBox)
 
         # Tabs
 
