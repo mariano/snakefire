@@ -46,8 +46,11 @@ class CampfireWorker(QtCore.QThread):
         stream.start()
         return stream
 
+    def getUser(self):
+        return self._campfire.get_user() if self._campfire else None
+
     def getApiToken(self):
-        return self._campfire.get_user().token if self._campfire else none
+        return self._campfire.get_user().token if self._campfire else None
 
     def leave(self, room, useThread=True):
         self._action = "_leave"

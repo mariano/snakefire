@@ -27,7 +27,7 @@ import keyring
 
 from campfireworker import CampfireWorker
 from dialogs import AlertsDialog, OptionsDialog
-from qtx import Suggester, ClickableQLabel, SuggesterKeyPressEventFilter, TabWidgetFocusEventFilter
+from qtx import ClickableQLabel, IdleTimer, Suggester, SuggesterKeyPressEventFilter, TabWidgetFocusEventFilter
 from systray import Systray
 
 class Snakefire(object):
@@ -57,17 +57,17 @@ class Snakefire(object):
     def __init__(self):
         self.DESCRIPTION = self._(self.DESCRIPTION)
         self._pingTimer = None
+        self._idleTimer = None
+        self._idle = False
         self._worker = None
         self._settings = {}
         self._canConnect = False
         self._cfDisconnected()
         self._qsettings = QtCore.QSettings()
-        self._icon = QtGui.QIcon(":/icons/%s" % (self.ICON))
+        self._icon = QtGui.QIcon(":/icons/{icon}".format(icon=self.ICON))
         self.setWindowIcon(self._icon)
         self.setAcceptDrops(True)
         self._setupUI()
-        self._pingTimer = QtCore.QTimer(self)
-        self.connect(self._pingTimer, QtCore.SIGNAL("timeout()"), self.ping)
 
         settings = self.getSettings("connection")
 
@@ -79,9 +79,6 @@ class Snakefire(object):
 
         if settings["connect"]:
             self.connectNow()
-
-    def _(self, string, module=None):
-        return str(QtCore.QCoreApplication.translate(module or Snakefire.NAME, string))
 
     def showEvent(self, event):
         if self._trayIcon.isVisible():
@@ -140,7 +137,10 @@ class Snakefire(object):
                 "rooms": []
             },
             "program": {
-                "minimize": False
+                "minimize": False,
+                "away": True,
+                "away_time": 10,
+                "away_message": self._("I am currently away from {name}").format(name=self.NAME)
             },
             "display": {
                 "theme": "default",
@@ -166,7 +166,7 @@ class Snakefire(object):
             if group == "connection":
                 boolSettings += ["ssl", "connect", "join"]
             elif group == "program":
-                boolSettings += ["minimize"]
+                boolSettings += ["away", "minimize"]
             elif group == "display":
                 boolSettings += ["show_join_message", "show_part_message"]
             elif group == "alerts":
@@ -206,6 +206,11 @@ class Snakefire(object):
             if settings["subdomain"] and settings["user"] and settings["password"]:
                 self._canConnect = True
             self._updateLayout()
+        elif group == "program":
+            if settings["away"] and self._connected:
+                self._setUpIdleTracker()
+            else:
+                self._setUpIdleTracker(False)
         elif group == "display":
             for roomId in self._rooms.keys():
                 if roomId in self._rooms and self._rooms[roomId]["view"]:
@@ -286,7 +291,7 @@ class Snakefire(object):
             return
 
         self._toolBar["join"].setEnabled(False)
-        self.statusBar().showMessage(self._("Joining room %s...") % room["name"])
+        self.statusBar().showMessage(self._("Joining room {room}...").format(room=room["name"]))
 
         self._rooms[room["id"]] = {
             "room": None,
@@ -318,9 +323,22 @@ class Snakefire(object):
         if not room or message.trimmed().isEmpty():
             return
 
-        self.statusBar().showMessage(self._("Sending message to %s...") % room.name)
-        self._getWorker().speak(room, unicode(message))
         self._editor.document().clear()
+
+        if message[0] == '/':
+            command = QtCore.QString(message)
+            separatorIndex = command.indexOf(QtCore.QRegExp('\\s'));
+            handled = self.command(command.mid(1, separatorIndex-1), command.mid(separatorIndex + 1 if separatorIndex >= 0 else command.length()))
+            if handled:
+                return
+
+        self.statusBar().showMessage(self._("Sending message to {room}...").format(room=room.name))
+        self._getWorker().speak(room, unicode(message))
+
+    def command(self, command, args):
+        if command.compare(QtCore.QString("away"), QtCore.Qt.CaseInsensitive) == 0:
+            self.toggleAway()
+            return True
 
     def uploadFile(self):
         room = self.getCurrentRoom()
@@ -344,7 +362,7 @@ class Snakefire(object):
 
     def leaveRoom(self, roomId):
         if roomId in self._rooms:
-            self.statusBar().showMessage(self._("Leaving room %s...") % self._rooms[roomId]["room"].name)
+            self.statusBar().showMessage(self._("Leaving room {room}...").format(room=self._rooms[roomId]["room"].name))
             self._getWorker().leave(self._rooms[roomId]["room"])
 
     def changeTopic(self):
@@ -353,12 +371,12 @@ class Snakefire(object):
             return
         topic, ok = QtGui.QInputDialog.getText(self,
             self._("Change topic"),
-            self._("Enter new topic for room %s") % room.name,
+            self._("Enter new topic for room {room}").format(room=room.name),
             QtGui.QLineEdit.Normal,
             room.topic
         )
         if ok:
-            self.statusBar().showMessage(self._("Changing topic for room %s...") % room.name)
+            self.statusBar().showMessage(self._("Changing topic for room {room}...").format(room=room.name))
             self._getWorker().changeTopic(room, topic)
 
     def updateRoomUsers(self, roomId = None, pinging = False):
@@ -368,7 +386,7 @@ class Snakefire(object):
                 roomId = room.id
         if roomId in self._rooms:
             if not pinging:
-                self.statusBar().showMessage(self._("Getting users in %s...") % self._rooms[roomId]["room"].name)
+                self.statusBar().showMessage(self._("Getting users in {room}...").format(room=self._rooms[roomId]["room"].name))
             self._getWorker().users(self._rooms[roomId]["room"], pinging)
 
     def updateRoomUploads(self, roomId = None):
@@ -377,7 +395,7 @@ class Snakefire(object):
             if room:
                 roomId = room.id
         if roomId in self._rooms:
-            self.statusBar().showMessage(self._("Getting uploads in %s...") % self._rooms[roomId]["room"].name)
+            self.statusBar().showMessage(self._("Getting uploads from {room}...").format(room=self._rooms[roomId]["room"].name))
             self._getWorker().uploads(self._rooms[roomId]["room"])
 
     def getCurrentRoom(self):
@@ -385,6 +403,33 @@ class Snakefire(object):
         for roomId in self._rooms.keys():
             if roomId in self._rooms and self._rooms[roomId]["tab"] == index:
                 return self._rooms[roomId]["room"]
+
+    def toggleAway(self):
+        self.setAway(False if self._idle else True)
+
+    def setAway(self, away=True):
+        self._idle = away
+        self.statusBar().showMessage(self._("You are now away") if self._idle else self._('You are now active'), 5000)
+
+    def _idle(self):
+        self.setAway(True)
+
+    def _active(self):
+        self.setAway(False)
+
+    def _setUpIdleTracker(self, enable=True):
+        if self._idleTimer:
+            self._idleTimer.stop().wait()
+            self._idleTimer = None
+
+        if enable:
+            try:
+                self._idleTimer = IdleTimer(self, self.getSetting("program", "away_time") * 60)
+                self.connect(self._idleTimer, QtCore.SIGNAL("idle()"), self._idle)
+                self.connect(self._idleTimer, QtCore.SIGNAL("active()"), self._active)
+                self._idleTimer.start()
+            except:
+                self._idleTimer = None
 
     def _cfStreamMessage(self, room, message, live=True, updateRoom=True):
         if (
@@ -399,25 +444,26 @@ class Snakefire(object):
         if not view and frame:
             return
 
-        user = message.user.name
         notify = True
         alert = False
+        alertIsDirectPing = False
 
         if message.is_text() and not message.is_by_current_user():
-            alert = self._matchesAlert(message.body)
+            alertIsDirectPing = QtCore.QString(message.body).contains(QtCore.QRegExp("\\b{name}\\b".format(name=self._worker.getUser().name), QtCore.Qt.CaseInsensitive))
+            alert = True if alertIsDirectPing else self._matchesAlert(message.body)
 
         html = None
         if message.is_joining() and self.getSetting("display", "show_join_message"):
-            html = self.MESSAGES["join"].format(user=user, room=room.name)
+            html = self.MESSAGES["join"].format(user=message.user.name, room=room.name)
         elif message.is_leaving() and self.getSetting("display", "show_join_message"):
-            html = self.MESSAGES["leave"].format(user=user, room=room.name)
+            html = self.MESSAGES["leave"].format(user=message.user.name, room=room.name)
         elif message.is_text() or message.is_upload():
             if message.body:
                 body = self._plainTextToHTML(message.tweet["tweet"] if message.is_tweet() else message.body)
 
             if message.is_tweet():
                 body = self.MESSAGES["tweet"].format(
-                    url_user = "http://twitter.com/%s" % message.tweet["user"],
+                    url_user = "http://twitter.com/{user}".format(user=message.tweet["user"]),
                     user = message.tweet["user"], 
                     url = message.tweet["url"],
                     message = body
@@ -425,7 +471,7 @@ class Snakefire(object):
             elif message.is_paste():
                 body = self.MESSAGES["paste"].format(message=body)
             elif message.is_upload():
-                body = self._displayUpload(view, user, message)
+                body = self._displayUpload(view, message)
             else:
                 body = self._autoLink(body)
 
@@ -441,7 +487,7 @@ class Snakefire(object):
 
             createdFormat = "h:mm ap"
             if created.daysTo(QtCore.QDateTime.currentDateTime()):
-                createdFormat = "MMM d,  %s" % createdFormat
+                createdFormat = "MMM d,  {createdFormat}".format(createdFormat=createdFormat)
 
             key = "message"
             if message.is_by_current_user():
@@ -451,11 +497,11 @@ class Snakefire(object):
 
             html = self.MESSAGES[key].format(
                 time = created.toLocalTime().toString(createdFormat),
-                user = user,
+                user = message.user.name,
                 message = body
             )
         elif message.is_topic_change():
-            html = self.MESSAGES["topic"].format(user=user, topic=message.body)
+            html = self.MESSAGES["topic"].format(user=message.user.name, topic=message.body)
 
         if html:
             currentScrollbarValue = frame.scrollPosition()
@@ -475,7 +521,7 @@ class Snakefire(object):
                 self._rooms[room.id]["newMessages"] += 1
 
             if self._rooms[room.id]["newMessages"] > 0:
-                tabBar.setTabText(tabIndex, "%s (%s)" % (room.name, self._rooms[room.id]["newMessages"]))
+                tabBar.setTabText(tabIndex, "{room} ({count})".format(room = room.name, count = self._rooms[room.id]["newMessages"]))
 
             if not isActiveTab and (alert or self._rooms[room.id]["newMessages"] > 0) and tabBar.tabTextColor(tabIndex) == self.COLORS["normal"]:
                 tabBar.setTabTextColor(tabIndex, self.COLORS["alert" if alert else "new"])
@@ -486,7 +532,7 @@ class Snakefire(object):
                 self._trayIcon.alert()
 
             if (alert and notify) or (not isActiveTab and notifyInactiveTab and message.is_text()):
-                self._notify(room, "{} says: {}".format(user, message.body))
+                self._notify(room, "{} says: {}".format(message.user.name, message.body))
 
         if updateRoom:
             if (message.is_joining() or message.is_leaving()):
@@ -496,7 +542,13 @@ class Snakefire(object):
             elif message.is_topic_change() and not message.is_by_current_user():
                 self._cfTopicChanged(room, message.body)
 
-    def _displayUpload(self, view, user, message):
+        if live and alertIsDirectPing and self.getSetting("program", "away") and self._idle:
+            self._getWorker().speak(room, unicode("{user}: {message}").format(
+                user = message.user.name,
+                message = self.getSetting("program", "away_message")
+            ))
+
+    def _displayUpload(self, view, message):
         image = None
         if message.upload['content_type'].startswith("image/"):
             try:
@@ -541,7 +593,7 @@ class Snakefire(object):
         words = self.getSetting("alerts", "matches").split(";")
 
         for word in words:
-            regexes.append("\\b%s\\b" % word)
+            regexes.append("\\b{word}\\b".format(word=word))
 
         for regex in regexes:
             if QtCore.QString(message).contains(QtCore.QRegExp(regex, QtCore.Qt.CaseInsensitive)):
@@ -558,9 +610,16 @@ class Snakefire(object):
         for room in rooms:
             self._toolBar["rooms"].addItem(room["name"], room)
 
-        self.statusBar().showMessage(self._("%s connected to Campfire") % user.name, 5000)
+        self.statusBar().showMessage(self._("{user} connected to Campfire").format(user=user.name), 5000)
         self._updateLayout()
-        self._pingTimer.start(60000); # Ping every minute
+
+        if not self._pingTimer:
+            self._pingTimer = QtCore.QTimer(self)
+            self.connect(self._pingTimer, QtCore.SIGNAL("timeout()"), self.ping)
+        self._pingTimer.start(60000) # Ping every minute
+
+        if self.getSetting("program", "away"):
+            self._setUpIdleTracker()
 
         if self.getSetting("connection", "join"):
             rooms = self.getSetting("connection", "rooms")
@@ -585,6 +644,11 @@ class Snakefire(object):
     def _cfDisconnected(self):
         if self._pingTimer:
             self._pingTimer.stop()
+            self._pingTimer = None
+
+        if self._idleTimer:
+            self._setUpIdleTracker(False)
+
         self._connecting = False
         self._connected = False
         self._rooms = {}
@@ -602,7 +666,7 @@ class Snakefire(object):
         self.updateRoomUsers(room.id)
         self.updateRoomUploads(room.id)
         if not rejoined:
-            self.statusBar().showMessage(self._("Joined room %s") % room.name, 5000)
+            self.statusBar().showMessage(self._("Joined room {room}").format(room=room.name), 5000)
         self._updatedRoomsList()
         if not rejoined and messages:
             for message in messages:
@@ -620,7 +684,7 @@ class Snakefire(object):
 
         self._tabs.removeTab(self._rooms[room.id]["tab"])
         del self._rooms[room.id]
-        self.statusBar().showMessage(self._("Left room %s") % room.name, 5000)
+        self.statusBar().showMessage(self._("Left room {room}").format(room=room.name), 5000)
         self._updatedRoomsList()
 
     def _cfRoomUsers(self, room, users, pinging=False):
@@ -646,14 +710,14 @@ class Snakefire(object):
         if uploads:
             html = ""
             for upload in uploads:
-                html += "%s&bull; <a href=\"%s\">%s</a>" % (
-                    "<br />" if html else "",
-                    upload["full_url"],
-                    upload["name"]
+                html += "{br}&bull; <a href=\"{url}\">{name}</a>".format(
+                    br = "<br />" if html else "",
+                    url = upload["full_url"],
+                    name = upload["name"]
                 )
-            html = "%s<br />%s" % (
-                self._("Latest uploads:"),
-                html
+            html = "{text}<br />{html}".format(
+                text = self._("Latest uploads:"),
+                html = html
             )
 
             label.setText(html)
@@ -697,7 +761,7 @@ class Snakefire(object):
     def _cfError(self, error):
         self.statusBar().clearMessage()
         if not self._connected:
-            QtGui.QMessageBox.critical(self, "Error", self._("Error while connecting: %s" % str(error)))
+            QtGui.QMessageBox.critical(self, "Error", self._("Error while connecting: {error}".format(error = str(error))))
         else:
             QtGui.QMessageBox.critical(self, "Error", str(error))
 
@@ -706,7 +770,7 @@ class Snakefire(object):
         if isinstance(error, RuntimeError):
             (code, message) = error
             if code == 401:
-                self.statusBar().showMessage(self._("Disconnected from room. Rejoining room %s...") % room.name, 5000)
+                self.statusBar().showMessage(self._("Disconnected from room. Rejoining room {room}...").format(room=room.name), 5000)
                 self._rooms[room.id]["stream"].stop().join()
                 self._getWorker().join(room.id, True)
                 return
@@ -759,7 +823,7 @@ class Snakefire(object):
         if not data.isNull():
             data = data.toMap()
             for key in data:
-                room[str(key)] = u"%s" % data[key].toString()
+                room[str(key)] = unicode(data[key].toString())
         return room
 
     def _connectWorkerSignals(self, worker):
@@ -1047,7 +1111,7 @@ class Snakefire(object):
         action = QtGui.QAction(text, self) 
         if icon is not None:
             if not isinstance(icon, QtGui.QIcon):
-                action.setIcon(QtGui.QIcon(":/icons/%s" % (icon)))
+                action.setIcon(QtGui.QIcon(":/icons/{icon}".format(icon=icon)))
             else:
                 action.setIcon(icon)
         if shortcut is not None: 
@@ -1084,6 +1148,9 @@ class Snakefire(object):
                             "<a href=\"" + currentUrl + "\">" + currentUrl + "</a>",
                             string)
         return string
+
+    def _(self, string, module=None):
+        return str(QtCore.QCoreApplication.translate(module or Snakefire.NAME, string))
 
 class QSnakefire(QtGui.QMainWindow, Snakefire):
     def __init__(self, parent=None):

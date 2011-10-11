@@ -1,6 +1,37 @@
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 
+import pxss
+
+class IdleTimer(QtCore.QThread):
+    def __init__(self, parent, idleSeconds):
+        super(IdleTimer, self).__init__(parent)
+        self._idleSeconds = idleSeconds
+        self._finish = False
+        self._mutex = QtCore.QMutex()
+        self._tracker = pxss.IdleTracker(idle_threshold = idleSeconds * 1000)
+
+    def stop(self):
+        self._mutex.lock()
+        self._finish = True
+        self._mutex.unlock()
+        return self
+
+    def run(self):
+        isIdle = False
+        while not self._finish:
+            (state, nextCheck, idle) = self._tracker.check_idle()
+
+            if state == 'idle' and not isIdle and idle >= (self._idleSeconds * 1000):
+                self.emit(QtCore.SIGNAL("idle()"))
+            elif state is not None and isIdle:
+                self.emit(QtCore.SIGNAL('active()'))
+
+            if state is not None:
+                isIdle = (state == 'idle')
+
+            self.usleep(nextCheck * 1000)
+
 class ClickableQLabel(QtGui.QLabel):
     def __init__(self, parent=None, flags=QtCore.Qt.WindowFlags()):
         super(ClickableQLabel, self).__init__(parent, flags)

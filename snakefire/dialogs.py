@@ -39,13 +39,18 @@ class OptionsDialog(QtGui.QDialog):
         isValid = (
             not self._subdomainField.text().trimmed().isEmpty() and
             not self._usernameField.text().trimmed().isEmpty() and
-            not self._passwordField.text().isEmpty()
+            not self._passwordField.text().isEmpty() and
+            ( not self._awayField.isChecked() or not self._awayMessageField.text().trimmed().isEmpty() )
         )
         self._okButton.setEnabled(isValid)
+        awayChecked = self._awayField.isChecked()
+        self._awayTimeField.setEnabled(awayChecked)
+        self._awayMessageField.setEnabled(awayChecked)
         return isValid
 
     def _save(self):
         (themeSize, themeSizeOk) = self._themeSizeField.itemData(self._themeSizeField.currentIndex()).toInt()
+        (awayTime, awayTimeOk) = self._awayTimeField.itemData(self._awayTimeField.currentIndex()).toInt()
 
         connectionSettings = {
             "subdomain": str(self._subdomainField.text().trimmed()),
@@ -56,7 +61,10 @@ class OptionsDialog(QtGui.QDialog):
             "join": self._joinField.isChecked()
         }
         programSettings = {
-            "minimize": self._minimizeField.isChecked()
+            "minimize": self._minimizeField.isChecked(),
+            "away": self._awayField.isChecked(),
+            "away_time": awayTime if awayTimeOk else 10,
+            "away_message": str(self._awayMessageField.text().trimmed())
         }
         displaySettings = {
             "theme": self._themeField.itemData(self._themeField.currentIndex()).toString(),
@@ -198,6 +206,36 @@ class OptionsDialog(QtGui.QDialog):
         programGroupBox = QtGui.QGroupBox(self._mainFrame._("Program settings"))
         programGroupBox.setLayout(programGrid)
 
+        # Away group
+
+        times = {
+            5: self._mainFrame._("5 minutes"),
+            10: self._mainFrame._("10 minutes"),
+            15: self._mainFrame._("15 minutes"),
+            30: self._mainFrame._("30 minutes"),
+            45: self._mainFrame._("45 minutes"),
+            60: self._mainFrame._("1 hour"),
+            90: self._mainFrame._("1 and a half hours"),
+            120: self._mainFrame._("2 hours")
+        }
+
+        self._awayField = QtGui.QCheckBox(self._mainFrame._("Set me as &away after idle time"), self)
+        self._awayTimeField = QtGui.QComboBox(self)
+        self._awayMessageField = QtGui.QLineEdit(self)
+
+        self.connect(self._awayField, QtCore.SIGNAL('stateChanged(int)'), self.validate)
+        self.connect(self._awayMessageField, QtCore.SIGNAL('textChanged(QString)'), self.validate)
+
+        awayGrid = QtGui.QGridLayout()
+        awayGrid.addWidget(self._awayField, 1, 0, 1, -1)
+        awayGrid.addWidget(QtGui.QLabel(self._mainFrame._("Idle Time:"), self), 2, 0)
+        awayGrid.addWidget(self._awayTimeField, 2, 1)
+        awayGrid.addWidget(QtGui.QLabel(self._mainFrame._("Message:"), self), 3, 0)
+        awayGrid.addWidget(self._awayMessageField, 3, 1)
+
+        awayGroupBox = QtGui.QGroupBox(self._mainFrame._("Away mode"))
+        awayGroupBox.setLayout(awayGrid)
+
         # Alert group
         
         self._notifyOnInactiveTabField = QtGui.QCheckBox(self._mainFrame._("&Notify on inactive messages"), self)
@@ -254,6 +292,7 @@ class OptionsDialog(QtGui.QDialog):
         optionsBox = QtGui.QVBoxLayout()
         optionsBox.addWidget(connectionGroupBox)
         optionsBox.addWidget(programGroupBox)
+        optionsBox.addWidget(awayGroupBox)
         optionsBox.addWidget(alertsGroupBox)
         optionsBox.addStretch(1)
 
@@ -314,6 +353,8 @@ class OptionsDialog(QtGui.QDialog):
         self._connectField.setChecked(connectionSettings["connect"])
         self._joinField.setChecked(connectionSettings["join"])
         self._minimizeField.setChecked(programSettings["minimize"])
+        self._awayField.setChecked(programSettings["away"])
+        self._awayMessageField.setText(programSettings["away_message"])
         self._notifyOnInactiveTabField.setChecked(alertsSettings["notify_inactive_tab"])
         self._matchesField.setText(alertsSettings["matches"])
 
@@ -321,4 +362,18 @@ class OptionsDialog(QtGui.QDialog):
         self._showPartMessageField.setChecked(displaySettings["show_part_message"])
 
         self._setupThemesUI(displaySettings)
+
+        currentIndex = None
+        index = 0
+        timeKeys = times.keys()
+        timeKeys.sort()
+        for value in timeKeys:
+            self._awayTimeField.addItem(times[value], value)
+            if value == int(programSettings["away_time"]):
+                currentIndex = index
+            index += 1
+
+        if currentIndex is not None:
+            self._awayTimeField.setCurrentIndex(currentIndex)
+
         self.validate()
