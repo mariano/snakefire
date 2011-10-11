@@ -78,7 +78,7 @@ class Snakefire(object):
         self._updateLayout()
 
         if settings["connect"]:
-            self.connectNow()
+           self.connectNow()
 
     def showEvent(self, event):
         if self._trayIcon.isVisible():
@@ -411,25 +411,22 @@ class Snakefire(object):
         self._idle = away
         self.statusBar().showMessage(self._("You are now away") if self._idle else self._('You are now active'), 5000)
 
-    def _idle(self):
+    def onIdle(self):
         self.setAway(True)
 
-    def _active(self):
+    def onActive(self):
         self.setAway(False)
 
     def _setUpIdleTracker(self, enable=True):
         if self._idleTimer:
-            self._idleTimer.stop().wait()
+            self._idleTimer.stop()
             self._idleTimer = None
 
         if enable:
-            try:
-                self._idleTimer = IdleTimer(self, self.getSetting("program", "away_time") * 60)
-                self.connect(self._idleTimer, QtCore.SIGNAL("idle()"), self._idle)
-                self.connect(self._idleTimer, QtCore.SIGNAL("active()"), self._active)
-                self._idleTimer.start()
-            except:
-                self._idleTimer = None
+            self._idleTimer = IdleTimer(self, self.getSetting("program", "away_time") * 60)
+            self.connect(self._idleTimer, QtCore.SIGNAL("idle()"), self.onIdle)
+            self.connect(self._idleTimer, QtCore.SIGNAL("active()"), self.onActive)
+            self._idleTimer.start()
 
     def _cfStreamMessage(self, room, message, live=True, updateRoom=True):
         if (

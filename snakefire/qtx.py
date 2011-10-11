@@ -1,7 +1,10 @@
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 
-import pxss
+try:
+    import pxss
+except:
+    pass
 
 class IdleTimer(QtCore.QThread):
     def __init__(self, parent, idleSeconds):
@@ -9,13 +12,16 @@ class IdleTimer(QtCore.QThread):
         self._idleSeconds = idleSeconds
         self._finish = False
         self._mutex = QtCore.QMutex()
-        self._tracker = pxss.IdleTracker(idle_threshold = idleSeconds * 1000)
+        
+        try:
+            self._tracker = pxss.IdleTracker(idle_threshold = idleSeconds * 1000)
+        except:
+            self._finish = True
 
     def stop(self):
         self._mutex.lock()
         self._finish = True
         self._mutex.unlock()
-        return self
 
     def run(self):
         isIdle = False
