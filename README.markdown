@@ -33,7 +33,7 @@ Other OS should refer to the [PyQT4 download page] [pyqt-download]
 For *Ubuntu based* systems, Keyring is in the official repositories, and can be
 installed the following way:
 
-1. For Ubuntu (GNOME) or Kubuntu (KDE):
+For Ubuntu (GNOME) or Kubuntu (KDE):
 
 		$ sudo apt-get install python-keyring
 
@@ -44,6 +44,16 @@ you can install it with (if you don't have yaourt, you should really
 		$ yaourt -S python-keyring
 
 Other OS should read [Python Keyring installation docs] [keyring-install].
+
+If you are on *GNOME* you also need to install python-gnomekeyring:
+
+For Ubuntu/Debian based systems:
+
+        $ sudo apt-get install python-gnomekeyring
+
+For *Arch Linux* systems:
+
+        $ pacman -S python-gnomekeyring
 
 All *XFCE* users should install GNOME keyring.
 
