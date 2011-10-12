@@ -26,10 +26,16 @@
 
 from ctypes import * 
 
-try:
-    libXss = CDLL('libXss.so')
-except OSError:
-    libXss = CDLL('libXss.so.1')
+libXss = None
+
+for lib in ['libXss.so', 'libXss.so.1']:
+    try:
+        libXss = CDLL(lib)
+    except OSError:
+        pass
+
+if libXss is None:
+    raise OSError("Could not load libXss.so")
 
 class Screen(Structure):
   _fields_ = [

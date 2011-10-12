@@ -2,6 +2,8 @@ from PyQt4 import QtCore
 from PyQt4 import QtGui
 from PyQt4 import QtWebKit
 
+from qtx import IdleTimer
+
 class AlertsDialog(QtGui.QDialog):
     def __init__(self, mainFrame):
         super(AlertsDialog, self).__init__(mainFrame)
@@ -43,7 +45,7 @@ class OptionsDialog(QtGui.QDialog):
             ( not self._awayField.isChecked() or not self._awayMessageField.text().trimmed().isEmpty() )
         )
         self._okButton.setEnabled(isValid)
-        awayChecked = self._awayField.isChecked()
+        awayChecked = self._awayField.isEnabled() and self._awayField.isChecked()
         self._awayTimeField.setEnabled(awayChecked)
         self._awayMessageField.setEnabled(awayChecked)
         return isValid
@@ -223,8 +225,11 @@ class OptionsDialog(QtGui.QDialog):
         self._awayTimeField = QtGui.QComboBox(self)
         self._awayMessageField = QtGui.QLineEdit(self)
 
-        self.connect(self._awayField, QtCore.SIGNAL('stateChanged(int)'), self.validate)
-        self.connect(self._awayMessageField, QtCore.SIGNAL('textChanged(QString)'), self.validate)
+        if IdleTimer.supported():
+            self.connect(self._awayField, QtCore.SIGNAL('stateChanged(int)'), self.validate)
+            self.connect(self._awayMessageField, QtCore.SIGNAL('textChanged(QString)'), self.validate)
+        else:
+            self._awayField.setEnabled(False)
 
         awayGrid = QtGui.QGridLayout()
         awayGrid.addWidget(self._awayField, 1, 0, 1, -1)

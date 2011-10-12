@@ -422,7 +422,7 @@ class Snakefire(object):
             self._idleTimer.stop()
             self._idleTimer = None
 
-        if enable:
+        if enable and IdleTimer.supported():
             self._idleTimer = IdleTimer(self, int(self.getSetting("program", "away_time")) * 60)
             self.connect(self._idleTimer, QtCore.SIGNAL("idle()"), self.onIdle)
             self.connect(self._idleTimer, QtCore.SIGNAL("active()"), self.onActive)

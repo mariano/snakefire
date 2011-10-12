@@ -1,3 +1,5 @@
+import ctypes
+
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 
@@ -9,14 +11,26 @@ except:
 class IdleTimer(QtCore.QThread):
     def __init__(self, parent, idleSeconds):
         super(IdleTimer, self).__init__(parent)
+
+        if not self.supported():
+            raise OSError("IdleTimer not supported on this system")
+
         self._idleSeconds = idleSeconds
         self._finish = False
         self._mutex = QtCore.QMutex()
-        
-        try:
-            self._tracker = pxss.IdleTracker(idle_threshold = idleSeconds * 1000)
-        except:
-            self._finish = True
+        self._tracker = pxss.IdleTracker(idle_threshold = idleSeconds * 1000)
+
+    @staticmethod
+    def supported():
+        supported = False
+        for lib in ['libXss.so', 'libXss.so.1']:
+            try:
+                if ctypes.CDLL(lib):
+                    supported = True
+                    break
+            except OSError:
+                pass
+        return supported
 
     def stop(self):
         self._mutex.lock()
