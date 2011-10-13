@@ -452,7 +452,7 @@ class Snakefire(object):
         html = None
         if message.is_joining() and self.getSetting("display", "show_join_message"):
             html = self.MESSAGES["join"].format(user=message.user.name, room=room.name)
-        elif message.is_leaving() and self.getSetting("display", "show_join_message"):
+        elif (message.is_leaving() or message.is_kick()) and self.getSetting("display", "show_join_message"):
             html = self.MESSAGES["leave"].format(user=message.user.name, room=room.name)
         elif message.is_text() or message.is_upload():
             if message.body:
