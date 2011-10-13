@@ -5,6 +5,7 @@ import os
 import re
 import sys
 import tempfile
+import time
 import urllib2
 import webbrowser
 
@@ -59,6 +60,7 @@ class Snakefire(object):
         self._pingTimer = None
         self._idleTimer = None
         self._idle = False
+        self._lastIdleAnswer = None
         self._worker = None
         self._settings = {}
         self._canConnect = False
@@ -446,7 +448,7 @@ class Snakefire(object):
         alertIsDirectPing = False
 
         if message.is_text() and not message.is_by_current_user():
-            alertIsDirectPing = QtCore.QString(message.body).contains(QtCore.QRegExp("\\b{name}\\b".format(name=self._worker.getUser().name), QtCore.Qt.CaseInsensitive))
+            alertIsDirectPing = (QtCore.QString(message.body).indexOf(QtCore.QRegExp("\\s*\\b{name}\\b".format(name=QtCore.QRegExp.escape(self._worker.getUser().name)), QtCore.Qt.CaseInsensitive)) == 0)
             alert = True if alertIsDirectPing else self._matchesAlert(message.body)
 
         html = None
@@ -539,7 +541,9 @@ class Snakefire(object):
             elif message.is_topic_change() and not message.is_by_current_user():
                 self._cfTopicChanged(room, message.body)
 
-        if live and alertIsDirectPing and self.getSetting("program", "away") and self._idle:
+        # Respond to direct pings while being away, but only send an auto-response if last one was sent more than 2 minutes ago
+        if live and alertIsDirectPing and self.getSetting("program", "away") and self._idle and (self._lastIdleAnswer is None or time.time() - self._lastIdleAnswer >= (2 * 60)):
+            self._lastIdleAnswer = time.time()
             self._getWorker().speak(room, unicode("{user}: {message}").format(
                 user = message.user.name,
                 message = self.getSetting("program", "away_message")
@@ -590,7 +594,7 @@ class Snakefire(object):
         words = self.getSetting("alerts", "matches").split(";")
 
         for word in words:
-            regexes.append("\\b{word}\\b".format(word=word))
+            regexes.append("\\b{word}\\b".format(word=QtCore.QRegExp.escape(word)))
 
         for regex in regexes:
             if QtCore.QString(message).contains(QtCore.QRegExp(regex, QtCore.Qt.CaseInsensitive)):
