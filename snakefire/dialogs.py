@@ -48,11 +48,13 @@ class OptionsDialog(QtGui.QDialog):
         awayChecked = self._awayField.isEnabled() and self._awayField.isChecked()
         self._awayTimeField.setEnabled(awayChecked)
         self._awayMessageField.setEnabled(awayChecked)
+        self._awayTimeBetweenMessagesField.setEnabled(awayChecked)
         return isValid
 
     def _save(self):
         (themeSize, themeSizeOk) = self._themeSizeField.itemData(self._themeSizeField.currentIndex()).toInt()
         (awayTime, awayTimeOk) = self._awayTimeField.itemData(self._awayTimeField.currentIndex()).toInt()
+        (awayTimeBetweenMessages, awayTimeBetweenMessagesOk) = self._awayTimeBetweenMessagesField.itemData(self._awayTimeBetweenMessagesField.currentIndex()).toInt()
 
         connectionSettings = {
             "subdomain": str(self._subdomainField.text().trimmed()),
@@ -66,6 +68,7 @@ class OptionsDialog(QtGui.QDialog):
             "minimize": self._minimizeField.isChecked(),
             "away": self._awayField.isChecked(),
             "away_time": awayTime if awayTimeOk else 10,
+            "away_time_between_messages": awayTimeBetweenMessages if awayTimeBetweenMessagesOk else 5,
             "away_message": str(self._awayMessageField.text().trimmed())
         }
         displaySettings = {
@@ -210,7 +213,7 @@ class OptionsDialog(QtGui.QDialog):
 
         # Away group
 
-        times = {
+        awayTimes = {
             5: self._mainFrame._("5 minutes"),
             10: self._mainFrame._("10 minutes"),
             15: self._mainFrame._("15 minutes"),
@@ -221,9 +224,20 @@ class OptionsDialog(QtGui.QDialog):
             120: self._mainFrame._("2 hours")
         }
 
+        awayBetweenTimes = {
+            2: self._mainFrame._("2 minutes"),
+            5: self._mainFrame._("5 minutes"),
+            10: self._mainFrame._("10 minutes"),
+            15: self._mainFrame._("15 minutes"),
+            30: self._mainFrame._("30 minutes"),
+            45: self._mainFrame._("45 minutes"),
+            60: self._mainFrame._("1 hour")
+        }
+
         self._awayField = QtGui.QCheckBox(self._mainFrame._("Set me as &away after idle time"), self)
         self._awayTimeField = QtGui.QComboBox(self)
         self._awayMessageField = QtGui.QLineEdit(self)
+        self._awayTimeBetweenMessagesField = QtGui.QComboBox(self)
 
         if IdleTimer.supported():
             self.connect(self._awayField, QtCore.SIGNAL('stateChanged(int)'), self.validate)
@@ -231,15 +245,25 @@ class OptionsDialog(QtGui.QDialog):
         else:
             self._awayField.setEnabled(False)
 
-        awayGrid = QtGui.QGridLayout()
-        awayGrid.addWidget(self._awayField, 1, 0, 1, -1)
-        awayGrid.addWidget(QtGui.QLabel(self._mainFrame._("Idle Time:"), self), 2, 0)
-        awayGrid.addWidget(self._awayTimeField, 2, 1)
-        awayGrid.addWidget(QtGui.QLabel(self._mainFrame._("Message:"), self), 3, 0)
-        awayGrid.addWidget(self._awayMessageField, 3, 1)
+        awayTimeBox = QtGui.QHBoxLayout()
+        awayTimeBox.addWidget(QtGui.QLabel(self._mainFrame._("Idle Time:"), self))
+        awayTimeBox.addWidget(self._awayTimeField)
+        awayTimeBox.addWidget(QtGui.QLabel(self._mainFrame._("Wait"), self))
+        awayTimeBox.addWidget(self._awayTimeBetweenMessagesField)
+        awayTimeBox.addWidget(QtGui.QLabel(self._mainFrame._("before sending consecutive messages"), self))
+        awayTimeBox.addStretch(1)
+
+        awayMessageBox = QtGui.QHBoxLayout()
+        awayMessageBox.addWidget(QtGui.QLabel(self._mainFrame._("Message:"), self))
+        awayMessageBox.addWidget(self._awayMessageField)
+
+        awayBox = QtGui.QVBoxLayout()
+        awayBox.addWidget(self._awayField)
+        awayBox.addLayout(awayTimeBox)
+        awayBox.addLayout(awayMessageBox)
 
         awayGroupBox = QtGui.QGroupBox(self._mainFrame._("Away mode"))
-        awayGroupBox.setLayout(awayGrid)
+        awayGroupBox.setLayout(awayBox)
 
         # Alert group
         
@@ -370,15 +394,28 @@ class OptionsDialog(QtGui.QDialog):
 
         currentIndex = None
         index = 0
-        timeKeys = times.keys()
-        timeKeys.sort()
-        for value in timeKeys:
-            self._awayTimeField.addItem(times[value], value)
+        awayTimeKeys = awayTimes.keys()
+        awayTimeKeys.sort()
+        for value in awayTimeKeys:
+            self._awayTimeField.addItem(awayTimes[value], value)
             if value == int(programSettings["away_time"]):
                 currentIndex = index
             index += 1
 
         if currentIndex is not None:
             self._awayTimeField.setCurrentIndex(currentIndex)
+
+        currentIndex = None
+        index = 0
+        awayBetweenTimeKeys = awayBetweenTimes.keys()
+        awayBetweenTimeKeys.sort()
+        for value in awayBetweenTimeKeys:
+            self._awayTimeBetweenMessagesField.addItem(awayBetweenTimes[value], value)
+            if value == int(programSettings["away_time_between_messages"]):
+                currentIndex = index
+            index += 1
+
+        if currentIndex is not None:
+            self._awayTimeBetweenMessagesField.setCurrentIndex(currentIndex)
 
         self.validate()

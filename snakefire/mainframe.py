@@ -142,6 +142,7 @@ class Snakefire(object):
                 "minimize": False,
                 "away": True,
                 "away_time": 10,
+                "away_time_between_messages": 5,
                 "away_message": self._("I am currently away from {name}").format(name=self.NAME)
             },
             "display": {
@@ -542,12 +543,13 @@ class Snakefire(object):
                 self._cfTopicChanged(room, message.body)
 
         # Respond to direct pings while being away, but only send an auto-response if last one was sent more than 2 minutes ago
-        if live and alertIsDirectPing and self.getSetting("program", "away") and self._idle and (self._lastIdleAnswer is None or time.time() - self._lastIdleAnswer >= (2 * 60)):
-            self._lastIdleAnswer = time.time()
-            self._getWorker().speak(room, unicode("{user}: {message}").format(
-                user = message.user.name,
-                message = self.getSetting("program", "away_message")
-            ))
+        if live and alertIsDirectPing and self.getSetting("program", "away") and self._idle:
+            if self._lastIdleAnswer is None or time.time() - self._lastIdleAnswer >= (int(self.getSetting("program", "away_time_between_messages")) * 60):
+                self._lastIdleAnswer = time.time()
+                self._getWorker().speak(room, unicode("{user}: {message}").format(
+                    user = message.user.name,
+                    message = self.getSetting("program", "away_message")
+                ))
 
     def _displayUpload(self, view, message):
         image = None
