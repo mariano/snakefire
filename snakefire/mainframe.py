@@ -553,7 +553,13 @@ class Snakefire(object):
 
     def _displayUpload(self, view, message):
         image = None
+        isImage = False
         if message.upload['content_type'].startswith("image/"):
+            isImage = True
+        elif message.upload['content_type'] == "application/octet-stream" and re.search(".(gif|jpg|jpeg|png)$", message.upload['name'], re.IGNORECASE):
+            isImage = True
+
+        if isImage:
             try:
                 request = urllib2.Request(message.upload['url'])
                 auth_header = base64.encodestring('{}:{}'.format(self._worker.getApiToken(), 'X')).replace('\n', '')
