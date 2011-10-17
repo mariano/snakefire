@@ -4,6 +4,17 @@ from PyQt4 import QtWebKit
 
 from qtx import IdleTimer
 
+class RowPushButton(QtGui.QPushButton):
+    def __init__(self, row, text, parent=None):
+        super(RowPushButton, self).__init__(parent)
+        self._row = row
+        self.setIcon(self.style().standardIcon(self.style().SP_TrashIcon))
+        self.setToolTip(text)
+        self.connect(self, QtCore.SIGNAL("clicked()"), self._clicked)
+
+    def _clicked(self):
+        self.emit(QtCore.SIGNAL("clicked(int)"), self._row)
+
 class AlertsDialog(QtGui.QDialog):
     def __init__(self, mainFrame):
         super(AlertsDialog, self).__init__(mainFrame)
@@ -19,8 +30,147 @@ class AlertsDialog(QtGui.QDialog):
     def cancel(self):
         self.close()
 
+    def add(self, match=None):
+        row = self._table.rowCount()
+        self._table.insertRow(row)
+
+        column = QtGui.QTableWidgetItem()
+        column.setFlags(QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsEditable)
+        if match:
+            column.setText(match['match'])
+        self._table.setItem(row, 0, column)
+
+        checkbox = QtGui.QCheckBox(self._table)
+        checkbox.setChecked(match['regex'] if match else False)
+        self._table.setCellWidget(row, 1, checkbox)
+
+        button = RowPushButton(row, self._mainFrame._("Delete"), self._table)
+        self.connect(button, QtCore.SIGNAL('clicked(int)'), self.delete)
+        self._table.setCellWidget(row, 2, button)
+
+    def delete(self, row):
+        self._table.removeRow(row)
+        self.validate()
+
+    def validate(self):
+        isValid = True
+        rowCount = self._table.rowCount()
+        for i in range(rowCount):
+            match = self._table.item(i, 0).text().trimmed()
+            if match.isEmpty():
+                isValid = False
+                break
+
+        self._addButton.setEnabled(isValid)
+        self._okButton.setEnabled(isValid)
+        return isValid
+
+    def _save(self):
+        matches = []
+        for i in range(self._table.rowCount()):
+            matches.append({
+                'match': str(self._table.item(i, 0).text().trimmed()),
+                'regex': self._table.cellWidget(i, 1).isChecked()
+            })
+
+        self._mainFrame.setSettings("matches", matches)
+
+        alertsSettings = {
+            "notify_ping": self._notifyOnPingField.isChecked(),
+            "notify_inactive_tab": self._notifyOnInactiveTabField.isChecked(),
+            "notify_blink": self._notifyBlinkField.isChecked(),
+            "notify_notify": self._notifyNotifyField.isChecked()
+        }
+        self._mainFrame.setSettings("alerts", alertsSettings)
+
     def _setupUI(self):
-        pass
+        self._addButton = QtGui.QPushButton(self._mainFrame._("Add"), self)
+        self.connect(self._addButton, QtCore.SIGNAL('clicked()'), self.add)
+
+        addBox = QtGui.QHBoxLayout()
+        addBox.addStretch(1)
+        addBox.addWidget(self._addButton)
+
+        headers = QtCore.QStringList()
+        headers.append(QtCore.QString(self._mainFrame._("Search text")))
+        headers.append(QtCore.QString(self._mainFrame._("RegEx")))
+        headers.append(QtCore.QString(self._mainFrame._("Delete")))
+
+        self._table = QtGui.QTableWidget(self)
+        self._table.setColumnCount(3)
+        self._table.setHorizontalHeaderLabels(headers)
+        self._table.resizeColumnsToContents()
+        self._table.horizontalHeader().setResizeMode(0, QtGui.QHeaderView.Stretch)
+
+        tableBox = QtGui.QVBoxLayout()
+        tableBox.addWidget(self._table)
+        tableBox.addLayout(addBox)
+
+        # Options
+        
+        self._notifyOnPingField = QtGui.QCheckBox(self._mainFrame._("Alert me whenever I get a &direct message"), self)
+        self._notifyOnInactiveTabField = QtGui.QCheckBox(self._mainFrame._("Notify me of every message sent while I'm &inactive"), self)
+
+        optionsGrid = QtGui.QGridLayout()
+        optionsGrid.addWidget(self._notifyOnPingField, 1, 0)
+        optionsGrid.addWidget(self._notifyOnInactiveTabField, 2, 0)
+
+        optionsGroupBox = QtGui.QGroupBox(self._mainFrame._("Alerts && Notifications"))
+        optionsGroupBox.setLayout(optionsGrid)
+
+        # Methods
+        
+        self._notifyBlinkField = QtGui.QCheckBox(self._mainFrame._("&Blink the systray icon when notifying"), self)
+        self._notifyNotifyField = QtGui.QCheckBox(self._mainFrame._("Trigger a &Notification using the OS notification system"), self)
+
+        methodsGrid = QtGui.QGridLayout()
+        methodsGrid.addWidget(self._notifyBlinkField, 1, 0)
+        methodsGrid.addWidget(self._notifyNotifyField, 2, 0)
+
+        methodsGroupBox = QtGui.QGroupBox(self._mainFrame._("Notification methods"))
+        methodsGroupBox.setLayout(methodsGrid)
+
+        # Buttons
+
+        self._okButton = QtGui.QPushButton(self._mainFrame._("&OK"), self)
+        self._cancelButton = QtGui.QPushButton(self._mainFrame._("&Cancel"), self)
+
+        self.connect(self._okButton, QtCore.SIGNAL('clicked()'), self.ok)
+        self.connect(self._cancelButton, QtCore.SIGNAL('clicked()'), self.cancel)
+
+        # Main layout
+
+        hbox = QtGui.QHBoxLayout()
+        hbox.addStretch(1)
+        hbox.addWidget(self._okButton)
+        hbox.addWidget(self._cancelButton)
+
+        vbox = QtGui.QVBoxLayout()
+        vbox.addLayout(tableBox)
+        vbox.addWidget(optionsGroupBox)
+        vbox.addWidget(methodsGroupBox)
+        vbox.addLayout(hbox)
+
+        self.setLayout(vbox)
+
+        # Load settings
+
+        alertsSettings = self._mainFrame.getSettings("alerts")
+        matches = self._mainFrame.getSettings("matches")
+
+        self._notifyOnPingField.setChecked(alertsSettings["notify_ping"])
+        self._notifyOnInactiveTabField.setChecked(alertsSettings["notify_inactive_tab"])
+        self._notifyBlinkField.setChecked(alertsSettings["notify_blink"])
+        self._notifyNotifyField.setChecked(alertsSettings["notify_notify"])
+
+        if matches:
+            for match in matches:
+                self.add(match)
+
+        # Only connect to signal after adding rows
+
+        self.connect(self._table, QtCore.SIGNAL('cellChanged(int,int)'), self.validate)
+        self.validate()
 
 class OptionsDialog(QtGui.QDialog):
     def __init__(self, mainFrame):
@@ -77,15 +227,10 @@ class OptionsDialog(QtGui.QDialog):
             "show_join_message": self._showJoinMessageField.isChecked(),
             "show_part_message": self._showPartMessageField.isChecked()
         }
-        alertsSettings = {
-            "notify_inactive_tab": self._notifyOnInactiveTabField.isChecked(),
-            "matches": str(self._matchesField.text().trimmed())
-        }
 
         self._mainFrame.setSettings("connection", connectionSettings)
         self._mainFrame.setSettings("program", programSettings)
         self._mainFrame.setSettings("display", displaySettings)
-        self._mainFrame.setSettings("alerts", alertsSettings)
 
     def _themeSelected(self):
         self._themePreview.settings().setUserStyleSheetUrl(QtCore.QUrl.fromLocalFile(":/themes/{theme}.css".format(
@@ -265,19 +410,6 @@ class OptionsDialog(QtGui.QDialog):
         awayGroupBox = QtGui.QGroupBox(self._mainFrame._("Away mode"))
         awayGroupBox.setLayout(awayBox)
 
-        # Alert group
-        
-        self._notifyOnInactiveTabField = QtGui.QCheckBox(self._mainFrame._("&Notify on inactive messages"), self)
-        self._matchesField = QtGui.QLineEdit(self)
-        
-        alertsGrid = QtGui.QGridLayout()
-        alertsGrid.addWidget(self._notifyOnInactiveTabField, 1, 0)
-        alertsGrid.addWidget(QtGui.QLabel(self._mainFrame._("Matches:"), self), 2, 0)
-        alertsGrid.addWidget(self._matchesField, 2, 1)
-
-        alertsGroupBox = QtGui.QGroupBox(self._mainFrame._("Alerts && Notifications"))
-        alertsGroupBox.setLayout(alertsGrid)
-
         # Theme group
 
         self._themeField = QtGui.QComboBox(self)
@@ -322,7 +454,6 @@ class OptionsDialog(QtGui.QDialog):
         optionsBox.addWidget(connectionGroupBox)
         optionsBox.addWidget(programGroupBox)
         optionsBox.addWidget(awayGroupBox)
-        optionsBox.addWidget(alertsGroupBox)
         optionsBox.addStretch(1)
 
         optionsFrame = QtGui.QWidget()
@@ -372,7 +503,6 @@ class OptionsDialog(QtGui.QDialog):
         connectionSettings = self._mainFrame.getSettings("connection")
         programSettings = self._mainFrame.getSettings("program")
         displaySettings = self._mainFrame.getSettings("display")
-        alertsSettings = self._mainFrame.getSettings("alerts")
 
         self._subdomainField.setText(connectionSettings["subdomain"])
         self._usernameField.setText(connectionSettings["user"])
@@ -384,8 +514,6 @@ class OptionsDialog(QtGui.QDialog):
         self._minimizeField.setChecked(programSettings["minimize"])
         self._awayField.setChecked(programSettings["away"])
         self._awayMessageField.setText(programSettings["away_message"])
-        self._notifyOnInactiveTabField.setChecked(alertsSettings["notify_inactive_tab"])
-        self._matchesField.setText(alertsSettings["matches"])
 
         self._showJoinMessageField.setChecked(displaySettings["show_join_message"])
         self._showPartMessageField.setChecked(displaySettings["show_part_message"])

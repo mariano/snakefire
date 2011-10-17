@@ -152,72 +152,107 @@ class Snakefire(object):
                 "show_part_message": True
             },
             "alerts": {
+                "notify_ping": True,
                 "notify_inactive_tab": False,
-                "matches": "Snakefire;python"
-            }
+                "notify_blink": True,
+                "notify_notify": True
+            },
+            "matches": []
         }
 
         if reload or not group in self._settings:
             settings = defaults[group] if group in defaults else {}
 
-            self._qsettings.beginGroup(group);
-            for setting in self._qsettings.childKeys():
-                settings[str(setting)] = self._qsettings.value(setting).toPyObject()
-            self._qsettings.endGroup();
+            if group == "matches":
+                settings = []
+                size = self._qsettings.beginReadArray("matches")
+                for i in range(size):
+                    self._qsettings.setArrayIndex(i)
+                    isRegex = False
+                    try:
+                        isRegex = True if ["true", "1"].index(str(self._qsettings.value("regex").toPyObject()).lower()) >= 0 else False
+                    except:
+                        pass
+                            
+                    settings.append({
+                        'regex': isRegex,
+                        'match': self._qsettings.value("match").toPyObject()
+                    })
+                self._qsettings.endArray()
+            else:
+                self._qsettings.beginGroup(group);
+                for setting in self._qsettings.childKeys():
+                    settings[str(setting)] = self._qsettings.value(setting).toPyObject()
+                self._qsettings.endGroup();
 
-            boolSettings = []
-            if group == "connection":
-                boolSettings += ["ssl", "connect", "join"]
-            elif group == "program":
-                boolSettings += ["away", "minimize"]
-            elif group == "display":
-                boolSettings += ["show_join_message", "show_part_message"]
-            elif group == "alerts":
-                boolSettings += ["notify_inactive_tab"]
+                boolSettings = []
+                if group == "connection":
+                    boolSettings += ["ssl", "connect", "join"]
+                elif group == "program":
+                    boolSettings += ["away", "minimize"]
+                elif group == "display":
+                    boolSettings += ["show_join_message", "show_part_message"]
+                elif group == "alerts":
+                    boolSettings += ["notify_ping", "notify_inactive_tab", "notify_blink", "notify_notify"]
 
-            for boolSetting in boolSettings:
-                try:
-                    settings[boolSetting] = True if ["true", "1"].index(str(settings[boolSetting]).lower()) >= 0 else False
-                except:
-                    settings[boolSetting] = False
+                for boolSetting in boolSettings:
+                    try:
+                        settings[boolSetting] = True if ["true", "1"].index(str(settings[boolSetting]).lower()) >= 0 else False
+                    except:
+                        settings[boolSetting] = False
 
-            if group == "connection" and settings["subdomain"] and settings["user"]:
-                settings["password"] = keyring.get_password(self.NAME, str(settings["subdomain"])+"_"+str(settings["user"])) 
+                if group == "connection" and settings["subdomain"] and settings["user"]:
+                    settings["password"] = keyring.get_password(self.NAME, str(settings["subdomain"])+"_"+str(settings["user"])) 
 
             self._settings[group] = settings
 
         settings = self._settings[group]
         if asString:
-            for setting in settings:
-                if not isinstance(settings[setting], bool):
-                    settings[setting] = str(settings[setting]) if settings[setting] else ""
+            if isinstance(settings, list):
+                for i, row in enumerate(settings):
+                    for setting in row:
+                        if not isinstance(row[setting], bool):
+                            settings[i][setting] = str(row[setting]) if row[setting] else ""
+            else:
+                for setting in settings:
+                    if not isinstance(settings[setting], bool):
+                        settings[setting] = str(settings[setting]) if settings[setting] else ""
+
         return settings
 
     def setSettings(self, group, settings):
         self._settings[group] = settings;
 
-        self._qsettings.beginGroup(group);
-        for setting in self._settings[group]:
-            if group != "connection" or setting != "password":
-                self._qsettings.setValue(setting, settings[setting])
-            elif settings["subdomain"] and settings["user"]:
-                keyring.set_password(self.NAME, settings["subdomain"]+"_"+settings["user"], settings[setting]) 
-        self._qsettings.endGroup();
+        if group == "matches":
+            self._qsettings.beginWriteArray("matches")
+            for i, setting in enumerate(settings):
+                self._qsettings.setArrayIndex(i)
+                self._qsettings.setValue("regex", setting["regex"])
+                self._qsettings.setValue("match", setting["match"])
+            self._qsettings.endArray()
+        else:
+            self._qsettings.beginGroup(group);
+            for setting in self._settings[group]:
+                if group != "connection" or setting != "password":
+                    self._qsettings.setValue(setting, settings[setting])
+                elif settings["subdomain"] and settings["user"]:
+                    keyring.set_password(self.NAME, settings["subdomain"]+"_"+settings["user"], settings[setting]) 
+            self._qsettings.endGroup();
 
-        if group == "connection":
-            self._canConnect = False
-            if settings["subdomain"] and settings["user"] and settings["password"]:
-                self._canConnect = True
-            self._updateLayout()
-        elif group == "program":
-            if settings["away"] and self._connected:
-                self._setUpIdleTracker()
-            else:
-                self._setUpIdleTracker(False)
-        elif group == "display":
-            for roomId in self._rooms.keys():
-                if roomId in self._rooms and self._rooms[roomId]["view"]:
-                    self._rooms[roomId]["view"].updateTheme(settings["theme"], settings["size"])
+            if group == "connection":
+                self._canConnect = False
+                if settings["subdomain"] and settings["user"] and settings["password"]:
+                    self._canConnect = True
+                self._updateLayout()
+            elif group == "program":
+                if settings["away"] and self._connected:
+                    self._setUpIdleTracker()
+                else:
+                    self._setUpIdleTracker(False)
+            elif group == "display":
+                for roomId in self._rooms.keys():
+                    if roomId in self._rooms and self._rooms[roomId]["view"]:
+                        self._rooms[roomId]["view"].updateTheme(settings["theme"], settings["size"])
 
     def exit(self):
         self._forceClose = True
@@ -450,7 +485,7 @@ class Snakefire(object):
 
         if message.is_text() and not message.is_by_current_user():
             alertIsDirectPing = (QtCore.QString(message.body).indexOf(QtCore.QRegExp("\\s*\\b{name}\\b".format(name=QtCore.QRegExp.escape(self._worker.getUser().name)), QtCore.Qt.CaseInsensitive)) == 0)
-            alert = True if alertIsDirectPing else self._matchesAlert(message.body)
+            alert = self.getSetting("alerts", "notify_ping") if alertIsDirectPing else self._matchesAlert(message.body)
 
         html = None
         if message.is_joining() and self.getSetting("display", "show_join_message"):
@@ -528,10 +563,10 @@ class Snakefire(object):
 
             notifyInactiveTab = self.getSetting("alerts", "notify_inactive_tab")
 
-            if not isActiveTab and (alert or notifyInactiveTab):
+            if (not isActiveTab and (alert or notifyInactiveTab)) and self.getSetting("alerts", "notify_blink"):
                 self._trayIcon.alert()
 
-            if (alert and notify) or (not isActiveTab and notifyInactiveTab and message.is_text()):
+            if ((alert and notify) or (not isActiveTab and notifyInactiveTab and message.is_text())) and self.getSetting("alerts", "notify_notify"):
                 self._notify(room, "{} says: {}".format(message.user.name, message.body))
 
         if updateRoom:
@@ -598,13 +633,9 @@ class Snakefire(object):
         
     def _matchesAlert(self, message):
         matches = False
-        regexes = []
-        words = self.getSetting("alerts", "matches").split(";")
-
-        for word in words:
-            regexes.append("\\b{word}\\b".format(word=QtCore.QRegExp.escape(word)))
-
-        for regex in regexes:
+        searchMatches = self.getSettings("matches")
+        for match in searchMatches:
+            regex = "\\b{word}\\b".format(word=QtCore.QRegExp.escape(match['match'])) if not match['regex'] else match['match']
             if QtCore.QString(message).contains(QtCore.QRegExp(regex, QtCore.Qt.CaseInsensitive)):
                 matches = True
                 break
