@@ -2,7 +2,7 @@
 
 ## LICENSE ##
 
-Pyfire is released under the [MIT License] [license].
+Snakefire is released under the [MIT License] [license].
 
 ## TEAM ##
 
@@ -13,11 +13,35 @@ Pyfire is released under the [MIT License] [license].
 
 ### Requirements ###
 
+### Pyfire ###
+
+[Pyfire] [pyfire] is required.
+
+For *Ubuntu/Debian based* systems, Pyfire is in [Zakaria Zajac's PPA] [zakaria_zajac_ppa] 
+repository, which must be added to install:
+
+        $ sudo add-apt-repository ppa:zak-d/python-pyfire && sudo apt-get update
+        $ sudo apt-get install python-pyfire
+
+For *Arch Linux*, Pyfire is in an AUR repository. If you have [yaourt] [yaourt],
+you can install it with (if you don't have yaourt, you should really 
+[get it] [yaourt]
+
+		$ yaourt -S python-pyfire
+
+Other OS may install it through Python's [PIP] [pip]:
+
+        $ pip install pyfire
+
+Or also using [Easy Install] [easy_install]:
+
+        $ easy_install pyfire
+
 ### PyQT4 ###
 
 The python library for QT is required.
 
-For *Ubuntu based* systems, PyQT4 is in the official repositories, and can be
+For *Ubuntu/Debian based* systems, PyQT4 is in the official repositories, and can be
 installed the following way:
 
 		$ sudo apt-get install python-qt4
@@ -30,16 +54,14 @@ Other OS should refer to the [PyQT4 download page] [pyqt-download]
 
 #### Keyring ####
 
-For *Ubuntu based* systems, Keyring is in the official repositories, and can be
+For *Ubuntu/Debian based* systems, Keyring is in the official repositories, and can be
 installed the following way:
 
 For Ubuntu (GNOME) or Kubuntu (KDE):
 
 		$ sudo apt-get install python-keyring
 
-For *Arch Linux*, Keyring is in an AUR repository. If you have [yaourt] [yaourt],
-you can install it with (if you don't have yaourt, you should really 
-[get it] [yaourt]
+For *Arch Linux*, Keyring is in an AUR repository. Install it with yaourt:
 
 		$ yaourt -S python-keyring
 
@@ -47,7 +69,7 @@ Other OS should read [Python Keyring installation docs] [keyring-install].
 
 If you are on *GNOME* you also need to install python-gnomekeyring:
 
-For Ubuntu/Debian based systems:
+For *Ubuntu/Debian* based systems:
 
         $ sudo apt-get install python-gnomekeyring
 
@@ -59,7 +81,7 @@ All *XFCE* users should install GNOME keyring.
 
 #### PyOpenSSL ####
 
-For *Ubuntu based* systems, PyOpenSSL is in the official repositories, and can be
+For *Ubuntu/Debian based* systems, PyOpenSSL is in the official repositories, and can be
 installed the following way:
 
 		$ sudo apt-get install python-openssl
@@ -72,7 +94,7 @@ Other OS should read [PyOpenSSL download page] [pyopenssl-download].
 
 #### Notifications ####
 
-For *Ubuntu based* systems, python-notify is in the official repositores, and can be
+For *Ubuntu/Debian based* systems, python-notify is in the official repositores, and can be
 installed the following way:
 
         $ sudo apt-get install python-notify
@@ -83,7 +105,7 @@ For *Arch Linux*, python-notify is in the extra repository, and can be installed
 
 #### Twisted ####
 
-For *Ubuntu based* systems, Twisted is in the official repositories, and can be
+For *Ubuntu/Debian based* systems, Twisted is in the official repositories, and can be
 installed the following way:
 
 *Ubuntu Lucid (10.04)*: the version included in the official repositories (10.0)
@@ -108,8 +130,7 @@ shows how to install Twisted on several platforms.
 
 #### Python Imaging Library ####
 
-
-For *Ubuntu based* systems, PIL is in the official repositories, and can be
+For *Ubuntu/Debian based* systems, PIL is in the official repositories, and can be
 installed the following way:
 
         $ sudo apt-get install python-imaging
@@ -123,14 +144,13 @@ For *Arch Linux*, PIL is in the extra repository and can be installed with:
 #### Running the developer version ####
 
 If you wish to run the latest version of Snakefire, without having to
-explicitly install it, follow these instructions:
+explicitly install it, follow these instructions (make sure to previously
+install the requirements):
 
 1. Get the latest development version by cloning from its GIT repository:
 
 		$ git clone git://github.com/mariano/snakefire
 		$ cd snakefire
-		$ git submodule init
-		$ git submodule update
 
    You can keep up with the latest updates by accessing the directory where
    you installed Snakefire, and running:
@@ -159,7 +179,11 @@ Snakefire, and do:
 
 [license]: http://www.opensource.org/licenses/mit-license.php
 [pyqt-download]: http://www.riverbankcomputing.co.uk/software/pyqt/download
+[pyfire]: http://github.com/mariano/pyfire
 [pyfire-readme]: http://github.com/mariano/pyfire#readme
+[pip]: http://pypi.python.org/pypi/pip
+[easy_install]: http://packages.python.org/distribute/easy_install.html
+[zakaria_zajac_ppa]: https://launchpad.net/~zak-d/+archive/python-pyfire
 [yaourt]: http://wiki.archlinux.org/index.php/Yaourt
 [keyring-install]: http://pypi.python.org/pypi/keyring/#installation-instructions
 [pyopenssl-download]: http://pypi.python.org/pypi/pyOpenSSL

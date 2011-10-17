@@ -1,8 +1,7 @@
 import copy
+import pyfire
 
 from PyQt4 import QtCore
-
-from .pyfire import pyfire
 
 class CampfireWorker(QtCore.QThread):
     def __init__(self, subdomain, user, password, ssl=False, parent=None, campfire=None):
