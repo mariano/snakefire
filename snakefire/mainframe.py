@@ -535,9 +535,9 @@ class Snakefire(object):
                     key = "no_time_message_self"
             elif alert:
                 key = "alert"
-            elif self.getSetting("display", "show_message_timestamps"):
+            elif not self.getSetting("display", "show_message_timestamps"):
                 key = "no_time_message"
-
+            
             html = self.MESSAGES[key].format(
                 time = created.toLocalTime().toString(createdFormat),
                 user = message.user.name,
@@ -575,7 +575,7 @@ class Snakefire(object):
                 self._trayIcon.alert()
 
             if ((alert and notify) or (not isActiveTab and notifyInactiveTab and message.is_text())) and self.getSetting("alerts", "notify_notify"):
-                self._notify(room, "{} says: {}".format(message.user.name, message.body))
+                self._notify(room, "{} says: {}".format(message.user.name, message.body), message.user)
 
         if updateRoom:
             if (message.is_joining() or message.is_leaving()):
@@ -920,7 +920,7 @@ class Snakefire(object):
         else:
             centralWidget.show()
 
-    def _notify(self, room, message):
+    def _notify(self, room, message, user):
         raise NotImplementedError("_notify() must be implemented")
 
     def _updateRoomLayout(self):
@@ -1209,7 +1209,7 @@ class QSnakefire(QtGui.QMainWindow, Snakefire):
         toolbar = self.addToolBar(self.NAME)
         return toolbar
 
-    def _notify(self, room, message):
+    def _notify(self, room, message, user):
         self._trayIcon.showMessage(room.name, message)
 
 if KDE_ENABLED:
@@ -1218,7 +1218,7 @@ if KDE_ENABLED:
             kdeui.KMainWindow.__init__(self, parent)
             Snakefire.__init__(self)
 
-        def _notify(self, room, message):
+        def _notify(self, room, message, user):
             notification = kdeui.KNotification.event(
                 "FilterAlert",
                 message,
@@ -1233,11 +1233,20 @@ if GNOME_ENABLED or XFCE_ENABLED:
             super(GSnakefire, self).__init__(parent)
             pynotify.init("Snakefire")
 
-        def _notify(self, room, message):
+        def _notify(self, room, message, user):
             title = "Snakefire Room: {}".format(room.name)
             try:
-                notify = pynotify.Notification(title, message)
+                request = urllib2.Request(user.avatar_url)
+                image = urllib2.urlopen(request).read()
+                
+                imageFile = tempfile.NamedTemporaryFile('w+b')
+                imageFile.write(image)
+                imageFile.flush()
+
+                notify = pynotify.Notification(title, message, imageFile.name)
                 notify.show()
+
+                imageFile.close()
             except:
                 subprocess.call(['notify-send', title, message])
 
