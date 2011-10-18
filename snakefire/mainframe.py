@@ -48,7 +48,9 @@ class Snakefire(object):
         "join": '<div class="joined">--&gt; {user} joined {room}</div>',
         "leave": '<div class="left">&lt;-- {user} has left {room}</div>',
         "message_self": '<div class="message"><span class="time">[{time}]</span> <span class="author self">{user}</span>: {message}</div>',
+        "no_time_message_self": '<div class="message"><span class="author self">{user}</span>: {message}</div>',
         "message": '<div class="message"><span class="time">[{time}]</span> <span class="author">{user}</span>: {message}</div>',
+        "no_time_message": '<div class="message"><span class="author">{user}</span>: {message}</div>',
         "paste": '<div class="paste">{message}</div>',
         "upload": '<span class="upload"><a href="{url}">{name}</a></span>',
         "topic": '<div class="topic">{user} changed topic to <span class="new_topic">{topic}</span></div>',
@@ -149,7 +151,8 @@ class Snakefire(object):
                 "theme": "default",
                 "size": 100,
                 "show_join_message": True,
-                "show_part_message": True
+                "show_part_message": True,
+                "show_message_timestamps": True
             },
             "alerts": {
                 "notify_ping": True,
@@ -191,7 +194,7 @@ class Snakefire(object):
                 elif group == "program":
                     boolSettings += ["away", "minimize"]
                 elif group == "display":
-                    boolSettings += ["show_join_message", "show_part_message"]
+                    boolSettings += ["show_join_message", "show_part_message", "show_message_timestamps"]
                 elif group == "alerts":
                     boolSettings += ["notify_ping", "notify_inactive_tab", "notify_blink", "notify_notify"]
 
@@ -523,12 +526,17 @@ class Snakefire(object):
             createdFormat = "h:mm ap"
             if created.daysTo(QtCore.QDateTime.currentDateTime()):
                 createdFormat = "MMM d,  {createdFormat}".format(createdFormat=createdFormat)
-
+            
             key = "message"
-            if message.is_by_current_user():
-                key = "message_self"
+            if message.is_by_current_user(): 
+                if self.getSetting("display", "show_message_timestamps"):
+                    key = "message_self"
+                else:
+                    key = "no_time_message_self"
             elif alert:
                 key = "alert"
+            elif self.getSetting("display", "show_message_timestamps"):
+                key = "no_time_message"
 
             html = self.MESSAGES[key].format(
                 time = created.toLocalTime().toString(createdFormat),
@@ -1235,9 +1243,9 @@ if GNOME_ENABLED or XFCE_ENABLED:
 
 def debug_trace():
   '''set a tracepoint in the python debugger that works with qt'''
-  from pyqt4.qtcore import pyqtremoveinputhook
+  from PyQt4.QtCore import pyqtRemoveInputHook
   from pdb import set_trace
-  pyqtremoveinputhook()
+  pyqtRemoveInputHook()
   set_trace()
 
 class SnakeFireWebView(QtWebKit.QWebView):

@@ -225,7 +225,8 @@ class OptionsDialog(QtGui.QDialog):
             "theme": self._themeField.itemData(self._themeField.currentIndex()).toString(),
             "size": themeSize if themeSizeOk else 100,
             "show_join_message": self._showJoinMessageField.isChecked(),
-            "show_part_message": self._showPartMessageField.isChecked()
+            "show_part_message": self._showPartMessageField.isChecked(),
+            "show_message_timestamps": self._showMessageTimestampsField.isChecked(),
         }
 
         self._mainFrame.setSettings("connection", connectionSettings)
@@ -440,10 +441,12 @@ class OptionsDialog(QtGui.QDialog):
 
         self._showJoinMessageField = QtGui.QCheckBox(self._mainFrame._("&Show join messages"), self)
         self._showPartMessageField = QtGui.QCheckBox(self._mainFrame._("&Show part messages"), self)
+        self._showMessageTimestampsField = QtGui.QCheckBox(self._mainFrame._("&Show message timestamps"), self)
         
         eventsGrid = QtGui.QGridLayout()
         eventsGrid.addWidget(self._showJoinMessageField, 1, 0)
         eventsGrid.addWidget(self._showPartMessageField, 2, 0)
+        eventsGrid.addWidget(self._showMessageTimestampsField, 3, 0)
 
         eventsGroupBox = QtGui.QGroupBox(self._mainFrame._("Display events"))
         eventsGroupBox.setLayout(eventsGrid)
@@ -517,6 +520,7 @@ class OptionsDialog(QtGui.QDialog):
 
         self._showJoinMessageField.setChecked(displaySettings["show_join_message"])
         self._showPartMessageField.setChecked(displaySettings["show_part_message"])
+        self._showMessageTimestampsField.setChecked(displaySettings["show_message_timestamps"])
 
         self._setupThemesUI(displaySettings)
 
