@@ -97,6 +97,8 @@ class AlertsDialog(QtGui.QDialog):
         self.connect(button, QtCore.SIGNAL('clicked(int)'), self.delete)
         self._table.setCellWidget(row, 2, button)
 
+        self._table.setCurrentCell(row, 0)
+
     def delete(self, row):
         self._table.removeRow(row)
         self.validate()
