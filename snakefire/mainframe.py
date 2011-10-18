@@ -27,15 +27,15 @@ elif GNOME_ENABLED or XFCE_ENABLED:
 import keyring
 
 from campfireworker import CampfireWorker
-from dialogs import AlertsDialog, OptionsDialog
+from dialogs import AboutDialog, AlertsDialog, OptionsDialog
 from qtx import ClickableQLabel, IdleTimer, Suggester, SuggesterKeyPressEventFilter, TabWidgetFocusEventFilter
 from systray import Systray
 
 class Snakefire(object):
-    DOMAIN = "snakefire.org"
+    DOMAIN = "www.snakefire.org"
     NAME = "Snakefire"
     DESCRIPTION = "Snakefire: Campfire Linux Client"
-    VERSION = "1.0.1"
+    VERSION = "1.0.2"
     ICON = "snakefire.png"
     COLORS = {
         "normal": None,
@@ -295,6 +295,10 @@ class Snakefire(object):
 
     def options(self):
         dialog = OptionsDialog(self)
+        dialog.open()
+
+    def about(self):
+        dialog = AboutDialog(self)
         dialog.open()
 
     def connectNow(self):
@@ -566,7 +570,7 @@ class Snakefire(object):
             if (not isActiveTab and (alert or notifyInactiveTab)) and self.getSetting("alerts", "notify_blink"):
                 self._trayIcon.alert()
 
-            if ((alert and notify) or (not isActiveTab and notifyInactiveTab and message.is_text())) and self.getSetting("alerts", "notify_notify"):
+            if live and ((alert and notify) or (not isActiveTab and notifyInactiveTab and message.is_text())) and self.getSetting("alerts", "notify_notify"):
                 self._notify(room, "{} says: {}".format(message.user.name, message.body))
 
         if updateRoom:
@@ -1102,7 +1106,7 @@ class Snakefire(object):
                 "options": self._createAction(self._("&Options..."), self.options)
             },
             "help": {
-                "about": self._createAction(self._("A&bout"))
+                "about": self._createAction(self._("A&bout"), self.about)
             }
         }
 

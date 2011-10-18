@@ -52,13 +52,24 @@ class IdleTimer(QtCore.QThread):
 
             self.usleep(nextCheck * 1000)
 
-class ClickableQLabel(QtGui.QLabel):
-    def __init__(self, parent=None, flags=QtCore.Qt.WindowFlags()):
-        super(ClickableQLabel, self).__init__(parent, flags)
-        self._setupUI()
+class RowPushButton(QtGui.QPushButton):
+    def __init__(self, row, text, parent=None):
+        super(RowPushButton, self).__init__(parent)
+        self._row = row
+        self.setIcon(self.style().standardIcon(self.style().SP_TrashIcon))
+        self.setToolTip(text)
+        self.connect(self, QtCore.SIGNAL("clicked()"), self._clicked)
 
-    def __init__(self, text, parent=None, flags=QtCore.Qt.WindowFlags()):
-        super(ClickableQLabel, self).__init__(text, parent, flags)
+    def _clicked(self):
+        self.emit(QtCore.SIGNAL("clicked(int)"), self._row)
+
+class ClickableQLabel(QtGui.QLabel):
+    def __init__(self, text=None, parent=None, flags=QtCore.Qt.WindowFlags()):
+        if text:
+            super(ClickableQLabel, self).__init__(text, parent, flags)
+        else:
+            super(ClickableQLabel, self).__init__(parent, flags)
+
         self._setupUI()
 
     def mouseReleaseEvent(self, event):

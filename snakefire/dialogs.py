@@ -1,19 +1,68 @@
+import webbrowser
+
 from PyQt4 import QtCore
 from PyQt4 import QtGui
 from PyQt4 import QtWebKit
 
-from qtx import IdleTimer
+from qtx import ClickableQLabel, IdleTimer, RowPushButton
 
-class RowPushButton(QtGui.QPushButton):
-    def __init__(self, row, text, parent=None):
-        super(RowPushButton, self).__init__(parent)
-        self._row = row
-        self.setIcon(self.style().standardIcon(self.style().SP_TrashIcon))
-        self.setToolTip(text)
-        self.connect(self, QtCore.SIGNAL("clicked()"), self._clicked)
+class AboutDialog(QtGui.QDialog):
+    def __init__(self, mainFrame):
+        super(AboutDialog, self).__init__(mainFrame)
+        self._mainFrame = mainFrame
 
-    def _clicked(self):
-        self.emit(QtCore.SIGNAL("clicked(int)"), self._row)
+        self.setWindowTitle(self._mainFrame._("About {name}").format(name=self._mainFrame.NAME))
+        self._setupUI()
+
+    def _website(self):
+        webbrowser.open("http://{url}".format(url=self._mainFrame.DOMAIN))
+
+    def _setupUI(self):
+        label = ClickableQLabel()
+        label.setPixmap(QtGui.QPixmap(":/images/snakefire-big.png"))
+        label.setAlignment(QtCore.Qt.AlignCenter)
+        self.connect(label, QtCore.SIGNAL("clicked()"), self._website)
+
+        websiteBox = QtGui.QHBoxLayout()
+        websiteBox.addWidget(QtGui.QLabel(self._mainFrame._("Website:")))
+        websiteBox.addWidget(QtGui.QLabel("<a href=\"http://{url}\">{name}</a>".format(
+            url=self._mainFrame.DOMAIN,
+            name=self._mainFrame.DOMAIN
+        )))
+        websiteBox.addStretch(1)
+
+        twitterBox = QtGui.QHBoxLayout()
+        twitterBox.addWidget(QtGui.QLabel(self._mainFrame._("Twitter:")))
+        twitterBox.addWidget(QtGui.QLabel("<a href=\"http://twitter.com/snakefirelinux\">@snakefirelinux</a>"))
+        twitterBox.addStretch(1)
+
+        layout = QtGui.QVBoxLayout()
+        layout.addWidget(label)
+        layout.addStretch(0.5)
+        layout.addWidget(QtGui.QLabel("<strong>{name} v{version}</strong>".format(
+            name=self._mainFrame.NAME,
+            version=self._mainFrame.VERSION
+        )))
+        layout.addStretch(0.5)
+        layout.addLayout(websiteBox)
+        layout.addLayout(twitterBox)
+
+        # Buttons
+
+        self._okButton = QtGui.QPushButton(self._mainFrame._("&OK"), self)
+        self.connect(self._okButton, QtCore.SIGNAL('clicked()'), self.close)
+
+        # Main layout
+
+        hbox = QtGui.QHBoxLayout()
+        hbox.addStretch(1)
+        hbox.addWidget(self._okButton)
+
+        vbox = QtGui.QVBoxLayout()
+        vbox.addLayout(layout)
+        vbox.addLayout(hbox)
+
+        self.setLayout(vbox)
 
 class AlertsDialog(QtGui.QDialog):
     def __init__(self, mainFrame):
@@ -290,7 +339,7 @@ class OptionsDialog(QtGui.QDialog):
             )
         ]
 
-        image = QtGui.QImage(":/icons/join.png")
+        image = QtGui.QImage(":/icons/snakefire.png")
         buffer = QtCore.QBuffer()
         if buffer.open(QtCore.QIODevice.WriteOnly) and image.save(buffer, 'PNG'):
             messages.extend([

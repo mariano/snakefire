@@ -1,5 +1,8 @@
 <!DOCTYPE RCC>
 <RCC version="1.0">
+<qresource prefix="/images">
+    <file>snakefire-big.png</file>
+</qresource>
 <qresource prefix="/icons">
 	<file>snakefire.png</file>
 	<file>alerts.png</file>

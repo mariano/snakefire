@@ -21,7 +21,7 @@ if __name__ == "__main__":
         catalog     = ""
         programName = kdecore.ki18n(snakefire.Snakefire.NAME)
         version     = snakefire.Snakefire.VERSION
-        description = kdecore.ki18n("A KDE Campfire client")
+        description = kdecore.ki18n("A Linux Campfire client")
         license     = kdecore.KAboutData.License_Custom
         copyright   = kdecore.ki18n("(c) 2010 Mariano Iglesias")
         text        = kdecore.ki18n("none")
