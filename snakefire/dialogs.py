@@ -491,7 +491,7 @@ class OptionsDialog(QtGui.QDialog):
         # Events group
 
         self._showJoinMessageField = QtGui.QCheckBox(self._mainFrame._("Show &join messages"), self)
-        self._showPartMessageField = QtGui.QCheckBox(self._mainFrame._("Show &part messages"), self)
+        self._showPartMessageField = QtGui.QCheckBox(self._mainFrame._("Show p&art messages"), self)
         self._showMessageTimestampsField = QtGui.QCheckBox(self._mainFrame._("Show message &timestamps"), self)
         
         eventsGrid = QtGui.QGridLayout()
