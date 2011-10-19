@@ -48,7 +48,9 @@ class Snakefire(object):
         "join": '<div class="joined">--&gt; {user} joined {room}</div>',
         "leave": '<div class="left">&lt;-- {user} has left {room}</div>',
         "message_self": '<div class="message"><span class="time">[{time}]</span> <span class="author self">{user}</span>: {message}</div>',
+        "no_time_message_self": '<div class="message"><span class="author self">{user}</span>: {message}</div>',
         "message": '<div class="message"><span class="time">[{time}]</span> <span class="author">{user}</span>: {message}</div>',
+        "no_time_message": '<div class="message"><span class="author">{user}</span>: {message}</div>',
         "paste": '<div class="paste">{message}</div>',
         "upload": '<span class="upload"><a href="{url}">{name}</a></span>',
         "topic": '<div class="topic">{user} changed topic to <span class="new_topic">{topic}</span></div>',
@@ -149,7 +151,8 @@ class Snakefire(object):
                 "theme": "default",
                 "size": 100,
                 "show_join_message": True,
-                "show_part_message": True
+                "show_part_message": True,
+                "show_message_timestamps": True
             },
             "alerts": {
                 "notify_ping": True,
@@ -191,7 +194,7 @@ class Snakefire(object):
                 elif group == "program":
                     boolSettings += ["away", "minimize"]
                 elif group == "display":
-                    boolSettings += ["show_join_message", "show_part_message"]
+                    boolSettings += ["show_join_message", "show_part_message", "show_message_timestamps"]
                 elif group == "alerts":
                     boolSettings += ["notify_ping", "notify_inactive_tab", "notify_blink", "notify_notify"]
 
@@ -527,13 +530,18 @@ class Snakefire(object):
             createdFormat = "h:mm ap"
             if created.daysTo(QtCore.QDateTime.currentDateTime()):
                 createdFormat = "MMM d,  {createdFormat}".format(createdFormat=createdFormat)
-
+            
             key = "message"
-            if message.is_by_current_user():
-                key = "message_self"
+            if message.is_by_current_user(): 
+                if self.getSetting("display", "show_message_timestamps"):
+                    key = "message_self"
+                else:
+                    key = "no_time_message_self"
             elif alert:
                 key = "alert"
-
+            elif not self.getSetting("display", "show_message_timestamps"):
+                key = "no_time_message"
+            
             html = self.MESSAGES[key].format(
                 time = created.toLocalTime().toString(createdFormat),
                 user = message.user.name,
@@ -570,8 +578,8 @@ class Snakefire(object):
             if (not isActiveTab and (alert or notifyInactiveTab)) and self.getSetting("alerts", "notify_blink"):
                 self._trayIcon.alert()
 
-            if live and ((alert and notify) or (not isActiveTab and notifyInactiveTab and message.is_text())) and self.getSetting("alerts", "notify_notify"):
-                self._notify(room, "{} says: {}".format(message.user.name, message.body))
+            if live and (((alert and notify) or (not isActiveTab and notifyInactiveTab and message.is_text())) and self.getSetting("alerts", "notify_notify")):
+                self._notify(room, "{} says: {}".format(message.user.name, message.body), message.user)
 
         if updateRoom:
             if (message.is_joining() or message.is_leaving()):
@@ -916,7 +924,7 @@ class Snakefire(object):
         else:
             centralWidget.show()
 
-    def _notify(self, room, message):
+    def _notify(self, room, message, user):
         raise NotImplementedError("_notify() must be implemented")
 
     def _updateRoomLayout(self):
@@ -1205,7 +1213,7 @@ class QSnakefire(QtGui.QMainWindow, Snakefire):
         toolbar = self.addToolBar(self.NAME)
         return toolbar
 
-    def _notify(self, room, message):
+    def _notify(self, room, message, user):
         self._trayIcon.showMessage(room.name, message)
 
 if KDE_ENABLED:
@@ -1214,7 +1222,7 @@ if KDE_ENABLED:
             kdeui.KMainWindow.__init__(self, parent)
             Snakefire.__init__(self)
 
-        def _notify(self, room, message):
+        def _notify(self, room, message, user):
             notification = kdeui.KNotification.event(
                 "FilterAlert",
                 message,
@@ -1229,19 +1237,28 @@ if GNOME_ENABLED or XFCE_ENABLED:
             super(GSnakefire, self).__init__(parent)
             pynotify.init("Snakefire")
 
-        def _notify(self, room, message):
+        def _notify(self, room, message, user):
             title = "Snakefire Room: {}".format(room.name)
             try:
-                notify = pynotify.Notification(title, message)
+                request = urllib2.Request(user.avatar_url)
+                image = urllib2.urlopen(request).read()
+                
+                imageFile = tempfile.NamedTemporaryFile('w+b')
+                imageFile.write(image)
+                imageFile.flush()
+
+                notify = pynotify.Notification(title, message, imageFile.name)
                 notify.show()
+
+                imageFile.close()
             except:
                 subprocess.call(['notify-send', title, message])
 
 def debug_trace():
   '''set a tracepoint in the python debugger that works with qt'''
-  from pyqt4.qtcore import pyqtremoveinputhook
+  from PyQt4.QtCore import pyqtRemoveInputHook
   from pdb import set_trace
-  pyqtremoveinputhook()
+  pyqtRemoveInputHook()
   set_trace()
 
 class SnakeFireWebView(QtWebKit.QWebView):
