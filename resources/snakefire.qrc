@@ -12,6 +12,7 @@
 </qresource>
 <qresource prefix="/themes">
 	<file>default.css</file>
+	<file>bespin.css</file>
 	<file>solarized.css</file>
 	<file>terminal.css</file>
 </qresource>
