@@ -551,6 +551,7 @@ class Snakefire(object):
             html = self.MESSAGES["topic"].format(user=message.user.name, topic=message.body)
 
         if html:
+            html = unicode(html)
             currentScrollbarValue = frame.scrollPosition()
             autoScroll = (currentScrollbarValue == frame.scrollBarMaximum(QtCore.Qt.Vertical))
             frame.setHtml(frame.toHtml() + html)
