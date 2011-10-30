@@ -48,7 +48,7 @@ installed the following way:
 
 For *Arch Linux*, PyQT4 is in the extra repository, and can be installed with:
 
-		$ pacman -S pyqt
+		$ pacman -S python2-pyqt
 
 Other OS should refer to the [PyQT4 download page] [pyqt-download]
 
@@ -88,7 +88,7 @@ installed the following way:
 
 For *Arch Linux*, PyOpenSSL is in the extra repository, and can be installed with:
 
-		$ pacman -S pyopenssl
+		$ pacman -S python2-pyopenssl
 
 Other OS should read [PyOpenSSL download page] [pyopenssl-download].
 
