@@ -26,6 +26,7 @@ elif GNOME_ENABLED or XFCE_ENABLED:
 
 import keyring
 
+from urlparse import urlparse
 from campfireworker import CampfireWorker
 from dialogs import AboutDialog, AlertsDialog, OptionsDialog
 from qtx import ClickableQLabel, IdleTimer, Suggester, SuggesterKeyPressEventFilter, TabWidgetFocusEventFilter
@@ -53,6 +54,7 @@ class Snakefire(object):
         "no_time_message": '<div class="message"><span class="author">{user}</span>: {message}</div>',
         "paste": '<div class="paste">{message}</div>',
         "upload": '<span class="upload"><a href="{url}">{name}</a></span>',
+        "link": '<a href="{url}">{name}</a>',
         "topic": '<div class="topic">{user} changed topic to <span class="new_topic">{topic}</span></div>',
         "tweet": '<div class="tweet"><a href="{url_user}">{user}</a> <a href="{url}">tweeted</a>: {message}</div>'
     }
@@ -514,6 +516,8 @@ class Snakefire(object):
                 body = self.MESSAGES["paste"].format(message=body)
             elif message.is_upload():
                 body = self._displayUpload(view, message)
+            elif self._isInlineLink(body):
+                body = self._displayInline(view, body)
             else:
                 body = self._autoLink(body)
 
@@ -599,50 +603,95 @@ class Snakefire(object):
                     message = self.getSetting("program", "away_message")
                 ))
 
+    def _displayInline(self, view, message_url):
+        request = urllib2.Request(message_url)
+
+        try:
+            response = urllib2.urlopen(request)
+        except:
+            return self._renderInlineLink(message_url, message_url)
+
+        headers = response.info()
+        data = response.read()
+        meta = {
+            'url': response.geturl(),
+            'name': response.geturl(),
+            'type': headers["Content-Type"]
+        }
+        
+        return self._renderInline(view, data, meta)
+
+
     def _displayUpload(self, view, message):
-        image = None
-        isImage = False
-        if message.upload['content_type'].startswith("image/"):
-            isImage = True
-        elif message.upload['content_type'] == "application/octet-stream" and re.search(".(gif|jpg|jpeg|png)$", message.upload['name'], re.IGNORECASE):
-            isImage = True
+        request = urllib2.Request(message.upload['url'])
+        auth_header = base64.encodestring('{}:{}'.format(self._worker.getApiToken(), 'X')).replace('\n', '')
+        request.add_header("Authorization", "Basic {}".format(auth_header))
 
-        if isImage:
-            try:
-                request = urllib2.Request(message.upload['url'])
-                auth_header = base64.encodestring('{}:{}'.format(self._worker.getApiToken(), 'X')).replace('\n', '')
-                request.add_header("Authorization", "Basic {}".format(auth_header))
-                image = urllib2.urlopen(request).read()
-            except:
-                pass
+        try:
+            response = urllib2.urlopen(request)
+        except:
+            return self._renderInlineLink(message.upload['url'], message.upload['name'])
+        
+        data = response.read()
+        meta = {
+            'url': message.upload['url'],
+            'name': message.upload['name'],
+            'type': message.upload['content_type'],
+        }
 
-        if image:
-            width = None
-            try:
-                imageFile = tempfile.NamedTemporaryFile('w+b')
-                imageFile.write(image)
-                (width, height) = Image.open(imageFile.name).size
-                imageFile.close()
+        return self._renderInline(view, data, meta)
+   
+    def _renderInline(self, view, data, meta):
+        if self._isImage(meta["type"], meta["name"]):
+            (width, height) = self._loadImage(data, False).size
+            adjustedWidth = self._fitImageToWindow(view, width)
 
-                maximumImageWidth = int(view.size().width() * 0.7) # 70% of viewport
-                if width > maximumImageWidth:
-                    width = maximumImageWidth
-            except:
-                pass
-
-            html = self.MESSAGES["image"].format(
-                type = message.upload['content_type'],
-                data = base64.encodestring(image),
-                url = message.upload['url'],
-                name = message.upload['name'],
+            return self.MESSAGES["image"].format(
+                type = meta["type"],
+                data = base64.encodestring(data),
+                url = meta["url"],
+                name = meta["name"],
                 attribs = "width=\"{width}\" ".format(width=width) if width else ""
             )
-        else:
-            html = self.MESSAGES["upload"].format(
-                url = message.upload['url'],
-                name = message.upload['name']
-            )
-        return html
+            
+        return self._renderInlineLink(meta["url"], meta["name"])
+
+    def _renderInlineLink(self, url, name):
+        return self.MESSAGES["link"].format(url = url, name = name)
+
+    def _isImage(self, content_type, name):
+        if content_type.startswith("image/"):
+            return True
+        elif content_type == "application/octet-stream" and re.search(".(gif|jpg|jpeg|png)$", name, re.IGNORECASE):
+            return True
+
+        return False
+
+    def _loadImage(self, image_data, load=True):
+        try:
+            imageFile = tempfile.NamedTemporaryFile('w+b')
+            imageFile.write(image_data)
+            imageFile.flush()
+            image = Image.open(imageFile.name)
+
+            if load:
+                image.load()
+            
+            imageFile.close()
+
+            return image
+        except:
+            pass
+
+    def _fitImageToWindow(self, view, width):
+        try:
+            maximumImageWidth = int(view.size().width() * 0.7) # 70% of viewport
+            if width > maximumImageWidth:
+                width = maximumImageWidth
+        except:
+            pass
+
+        return width
         
     def _matchesAlert(self, message):
         matches = False
@@ -1180,6 +1229,16 @@ class Snakefire(object):
 
     def _plainTextToHTML(self, string):
         return string.replace("<", "&lt;").replace(">", "&gt;").replace("\n", "<br />")
+
+    def _isInlineLink(self, string):
+        try:
+            url = urlparse(string)
+            if url.scheme is not '' and url.netloc is not '':
+                return True
+        except:
+            pass
+
+        return False
 
     def _autoLink(self, string):
         urlre = re.compile("(\(?https?://[-A-Za-z0-9+&@#/%?=~_()|!:,.;]*[-A-Za-z0-9+&@#/%=~_()|])(\">|</a>)?")
