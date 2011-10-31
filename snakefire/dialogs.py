@@ -1,5 +1,3 @@
-import webbrowser
-
 from PyQt4 import QtCore
 from PyQt4 import QtGui
 from PyQt4 import QtWebKit
@@ -16,7 +14,7 @@ class AboutDialog(QtGui.QDialog):
         self._setupUI()
 
     def _website(self):
-        webbrowser.open("http://{url}".format(url=self._mainFrame.DOMAIN))
+        QtGui.QDesktopServices.openUrl(QtCore.QUrl("http://{url}".format(url=self._mainFrame.DOMAIN)))
 
     def _setupUI(self):
         label = ClickableQLabel()
@@ -24,17 +22,21 @@ class AboutDialog(QtGui.QDialog):
         label.setAlignment(QtCore.Qt.AlignCenter)
         self.connect(label, QtCore.SIGNAL("clicked()"), self._website)
 
-        websiteBox = QtGui.QHBoxLayout()
-        websiteBox.addWidget(QtGui.QLabel(self._mainFrame._("Website:")))
-        websiteBox.addWidget(QtGui.QLabel("<a href=\"http://{url}\">{name}</a>".format(
+        urlLabel = QtGui.QLabel("<a href=\"http://{url}\">{name}</a>".format(
             url=self._mainFrame.DOMAIN,
             name=self._mainFrame.DOMAIN
-        )))
+        ))
+        urlLabel.setOpenExternalLinks(True)
+        websiteBox = QtGui.QHBoxLayout()
+        websiteBox.addWidget(QtGui.QLabel(self._mainFrame._("Website:")))
+        websiteBox.addWidget(urlLabel)
         websiteBox.addStretch(1)
 
+        twitterLabel = QtGui.QLabel("<a href=\"http://twitter.com/snakefirelinux\">@snakefirelinux</a>")
+        twitterLabel.setOpenExternalLinks(True)
         twitterBox = QtGui.QHBoxLayout()
         twitterBox.addWidget(QtGui.QLabel(self._mainFrame._("Twitter:")))
-        twitterBox.addWidget(QtGui.QLabel("<a href=\"http://twitter.com/snakefirelinux\">@snakefirelinux</a>"))
+        twitterBox.addWidget(twitterLabel)
         twitterBox.addStretch(1)
 
         layout = QtGui.QVBoxLayout()
@@ -159,7 +161,7 @@ class AlertsDialog(QtGui.QDialog):
         tableBox.addLayout(addBox)
 
         # Options
-        
+
         self._notifyOnPingField = QtGui.QCheckBox(self._mainFrame._("Alert me whenever I get a &direct message"), self)
         self._notifyOnInactiveTabField = QtGui.QCheckBox(self._mainFrame._("Notify me of every message sent while I'm &inactive"), self)
 
@@ -171,7 +173,7 @@ class AlertsDialog(QtGui.QDialog):
         optionsGroupBox.setLayout(optionsGrid)
 
         # Methods
-        
+
         self._notifyBlinkField = QtGui.QCheckBox(self._mainFrame._("&Blink the systray icon when notifying"), self)
         self._notifyNotifyField = QtGui.QCheckBox(self._mainFrame._("Trigger a &Notification using the OS notification system"), self)
 
@@ -338,7 +340,7 @@ class OptionsDialog(QtGui.QDialog):
             MessageRenderer.MESSAGES['paste'].format(message='def hello(self):<br />  print "Hello World"'),
             MessageRenderer.MESSAGES['topic'].format(user='Jane Doe', topic='Testing Snakefire, and loving it'),
             MessageRenderer.MESSAGES['message'].format(time='3:36 pm', user='Jane Doe', message='Looks good. Now look at this upload:'),
-            MessageRenderer.MESSAGES['message'].format(time='3:36 pm', user='Jane Doe', 
+            MessageRenderer.MESSAGES['message'].format(time='3:36 pm', user='Jane Doe',
                 message = MessageRenderer.MESSAGES['upload'].format(url='#', name='my_upload.tar.gz')
             )
         ]
@@ -396,7 +398,7 @@ class OptionsDialog(QtGui.QDialog):
         connectionGroupBox.setLayout(connectionGrid)
 
         # Program group
-        
+
         self._connectField = QtGui.QCheckBox(self._mainFrame._("Automatically &connect when program starts"), self)
         self._joinField = QtGui.QCheckBox(self._mainFrame._("&Join last opened channels once connected"), self)
         self._minimizeField = QtGui.QCheckBox(self._mainFrame._("&Minimize to system tray if window is minimized, or closed"), self)
@@ -494,7 +496,7 @@ class OptionsDialog(QtGui.QDialog):
         self._showJoinMessageField = QtGui.QCheckBox(self._mainFrame._("Show &join messages"), self)
         self._showPartMessageField = QtGui.QCheckBox(self._mainFrame._("Show p&art messages"), self)
         self._showMessageTimestampsField = QtGui.QCheckBox(self._mainFrame._("Show message &timestamps"), self)
-        
+
         eventsGrid = QtGui.QGridLayout()
         eventsGrid.addWidget(self._showJoinMessageField, 1, 0)
         eventsGrid.addWidget(self._showPartMessageField, 2, 0)
@@ -531,7 +533,7 @@ class OptionsDialog(QtGui.QDialog):
 
         tabs.addTab(optionsFrame, self._mainFrame._("&Program options"))
         tabs.addTab(displayFrame, self._mainFrame._("&Display options"))
-         
+
         # Buttons
 
         self._okButton = QtGui.QPushButton(self._mainFrame._("&OK"), self)

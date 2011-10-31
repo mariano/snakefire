@@ -5,7 +5,6 @@ import sys
 import tempfile
 import time
 import urllib2
-import webbrowser
 
 from snakefire import GNOME_ENABLED, KDE_ENABLED, XFCE_ENABLED
 
@@ -879,11 +878,13 @@ class Snakefire(object):
 
         #Send all link clicks to systems web browser
         view.page().setLinkDelegationPolicy(QtWebKit.QWebPage.DelegateAllLinks)
-        def linkClicked(url): webbrowser.open(str(url.toString()))
+        def linkClicked(url):
+            QtGui.QDesktopServices.openUrl(url)
         view.connect(view, QtCore.SIGNAL("linkClicked (const QUrl&)"), linkClicked)
 
         # Support auto scroll when needed
-        def autoScroll(size): frame.scroll(0, size.height())
+        def autoScroll(size):
+            frame.scroll(0, size.height())
         frame.connect(frame, QtCore.SIGNAL("contentsSizeChanged (const QSize&)"), autoScroll)
 
         usersList = QtGui.QListWidget()
