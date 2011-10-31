@@ -141,15 +141,15 @@ For *Arch Linux*, PyEnchant is in the community repository, and can be installed
 
 You now need to install a relevant dictionary.
 
-For *Arch Linux*, search for an aspell dictionary. For example, to install the english
-dictionary:
-
-        $ pacman -S aspell-en
-
 For *Ubuntu/debian based* systems, look for the appropriate aspell dictionary. For example,
 to install the english dictionary:
 
         $ sudo apt-get install aspell-en
+
+For *Arch Linux*, search for an aspell dictionary. For example, to install the english
+dictionary:
+
+        $ pacman -S aspell-en
 
 Other OS (such as Mac OSX) should look into [installing PyEnchant and appropriate dictionaries] [pyenchant]
 
