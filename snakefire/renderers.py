@@ -37,6 +37,13 @@ class MessageRenderer(QtCore.QThread):
         self._alertIsDirectPing = alertIsDirectPing
 
     def run(self):
+        html = self.render()
+        self.emit(QtCore.SIGNAL("render(PyQt_PyObject, PyQt_PyObject, PyQt_PyObject, PyQt_PyObject, PyQt_PyObject, PyQt_PyObject, PyQt_PyObject)"), html, self._room, self._message, self._live, self._updateRoom, self._alert, self._alertIsDirectPing)
+
+    def needsThread(self):
+        return self._message.is_upload() or (self._message.body and self._isInlineLink(self._message.body))
+
+    def render(self):
         html = None
         if self._message.is_joining():
             html = self.MESSAGES["join"].format(user=self._message.user.name, room=self._room.name)
@@ -95,7 +102,7 @@ class MessageRenderer(QtCore.QThread):
         elif self._message.is_topic_change():
             html = self.MESSAGES["topic"].format(user=self._message.user.name, topic=self._message.body)
 
-        self.emit(QtCore.SIGNAL("render(PyQt_PyObject, PyQt_PyObject, PyQt_PyObject, PyQt_PyObject, PyQt_PyObject, PyQt_PyObject, PyQt_PyObject)"), unicode(html), self._room, self._message, self._live, self._updateRoom, self._alert, self._alertIsDirectPing)
+        return unicode(html)
 
     def _displayInline(self, message_url):
         request = urllib2.Request(message_url)

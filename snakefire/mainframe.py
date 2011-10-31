@@ -160,7 +160,7 @@ class Snakefire(object):
                         isRegex = True if ["true", "1"].index(str(self._qsettings.value("regex").toPyObject()).lower()) >= 0 else False
                     except:
                         pass
-                            
+
                     settings.append({
                         'regex': isRegex,
                         'match': self._qsettings.value("match").toPyObject()
@@ -189,7 +189,7 @@ class Snakefire(object):
                         settings[boolSetting] = False
 
                 if group == "connection" and settings["subdomain"] and settings["user"]:
-                    settings["password"] = keyring.get_password(self.NAME, str(settings["subdomain"])+"_"+str(settings["user"])) 
+                    settings["password"] = keyring.get_password(self.NAME, str(settings["subdomain"])+"_"+str(settings["user"]))
 
             self._settings[group] = settings
 
@@ -223,7 +223,7 @@ class Snakefire(object):
                 if group != "connection" or setting != "password":
                     self._qsettings.setValue(setting, settings[setting])
                 elif settings["subdomain"] and settings["user"]:
-                    keyring.set_password(self.NAME, settings["subdomain"]+"_"+settings["user"], settings[setting]) 
+                    keyring.set_password(self.NAME, settings["subdomain"]+"_"+settings["user"], settings[setting])
             self._qsettings.endGroup();
 
             if group == "connection":
@@ -310,7 +310,7 @@ class Snakefire(object):
             for roomId in self._rooms.keys():
                 if roomId in self._rooms and self._rooms[roomId]["room"]:
                     self._worker.leave(self._rooms[roomId]["room"], False)
-         
+
         self._cfDisconnected()
         self._updateLayout()
 
@@ -459,7 +459,7 @@ class Snakefire(object):
 
     def _cfStreamMessage(self, room, message, live=True, updateRoom=True):
         if (
-            not message.user or 
+            not message.user or
             (live and message.is_text() and message.is_by_current_user()) or
             not room.id in self._rooms
         ):
@@ -477,10 +477,24 @@ class Snakefire(object):
             alert = self.getSetting("alerts", "notify_ping") if alertIsDirectPing else self._matchesAlert(message.body)
 
         maximumImageWidth = int(view.size().width() * 0.4) # 40% of viewport
+        renderer = MessageRenderer(
+            self._worker.getApiToken(),
+            maximumImageWidth,
+            room,
+            message,
+            live=live,
+            updateRoom=updateRoom,
+            showTimestamps = self.getSetting("display", "show_message_timestamps"),
+            alert=alert,
+            alertIsDirectPing=alertIsDirectPing,
+            parent=self
+        )
 
-        renderer = MessageRenderer(self._worker.getApiToken(), maximumImageWidth, room, message, live=live, updateRoom=updateRoom, showTimestamps = self.getSetting("display", "show_message_timestamps"), alert=alert, alertIsDirectPing=alertIsDirectPing, parent=self)
-        self.connect(renderer, QtCore.SIGNAL("render(PyQt_PyObject, PyQt_PyObject, PyQt_PyObject, PyQt_PyObject, PyQt_PyObject, PyQt_PyObject, PyQt_PyObject)"), self._renderMessage)
-        renderer.start()
+        if renderer.needsThread():
+            self.connect(renderer, QtCore.SIGNAL("render(PyQt_PyObject, PyQt_PyObject, PyQt_PyObject, PyQt_PyObject, PyQt_PyObject, PyQt_PyObject, PyQt_PyObject)"), self._renderMessage)
+            renderer.start()
+        else:
+            self._renderMessage(renderer.render(), room, message, live=live, updateRoom=updateRoom, alert=alert, alertIsDirectPing=alertIsDirectPing)
 
     def _renderMessage(self, html, room, message, live=True, updateRoom=True, alert=False, alertIsDirectPing=False):
         if (not room.id in self._rooms):
@@ -507,7 +521,7 @@ class Snakefire(object):
             tabIndex = self._rooms[room.id]["tab"]
             tabBar = self._tabs.tabBar()
             isActiveTab = (self.isActiveWindow() and tabIndex == self._tabs.currentIndex())
-            
+
             if message.is_text() and not isActiveTab:
                 self._rooms[room.id]["newMessages"] += 1
 
@@ -681,7 +695,7 @@ class Snakefire(object):
     def _cfUploadProgress(self, room, current, total):
         if not room.id in self._rooms:
             return
-        
+
         progressBar = self._rooms[room.id]["uploadProgressBar"]
         if not self._rooms[room.id]["uploadWidget"].isVisible():
             self._rooms[room.id]["uploadWidget"].show()
@@ -700,7 +714,7 @@ class Snakefire(object):
     def _cfTopicChanged(self, room, topic):
         if not room.id in self._rooms:
             return
-        
+
         self._rooms[room.id]["topicLabel"].setText(topic)
         self.statusBar().clearMessage()
 
@@ -1056,23 +1070,23 @@ class Snakefire(object):
         toolBar.addSeparator();
         toolBar.addAction(self._toolBar["alerts"])
 
-    def _createAction(self, text, slot=None, shortcut=None, icon=None, 
+    def _createAction(self, text, slot=None, shortcut=None, icon=None,
         tip=None, checkable=False, signal="triggered()"):
         """ Create an action """
-        action = QtGui.QAction(text, self) 
+        action = QtGui.QAction(text, self)
         if icon is not None:
             if not isinstance(icon, QtGui.QIcon):
                 action.setIcon(QtGui.QIcon(":/icons/{icon}".format(icon=icon)))
             else:
                 action.setIcon(icon)
-        if shortcut is not None: 
-            action.setShortcut(shortcut) 
-        if tip is not None: 
-            action.setToolTip(tip) 
-            action.setStatusTip(tip) 
-        if slot is not None: 
-            self.connect(action, QtCore.SIGNAL(signal), slot) 
-        if checkable: 
+        if shortcut is not None:
+            action.setShortcut(shortcut)
+        if tip is not None:
+            action.setToolTip(tip)
+            action.setStatusTip(tip)
+        if slot is not None:
+            self.connect(action, QtCore.SIGNAL(signal), slot)
+        if checkable:
             action.setCheckable(True)
         return action
 
@@ -1117,7 +1131,7 @@ if GNOME_ENABLED or XFCE_ENABLED:
             try:
                 request = urllib2.Request(user.avatar_url)
                 image = urllib2.urlopen(request).read()
-                
+
                 imageFile = tempfile.NamedTemporaryFile('w+b')
                 imageFile.write(image)
                 imageFile.flush()
@@ -1148,8 +1162,8 @@ class SnakeFireWebView(QtWebKit.QWebView):
         )))
         self.setTextSizeMultiplier(round(float(size if size else self.snakefire.getSetting("display", "size")) / 100, 1))
 
-    def dragEnterEvent(self, event): 
-        return self.snakefire.dragEnterEvent(event)        
+    def dragEnterEvent(self, event):
+        return self.snakefire.dragEnterEvent(event)
 
     def dropEvent(self, event):
         return self.snakefire.dropEvent(event)
