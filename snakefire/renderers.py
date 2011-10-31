@@ -56,7 +56,7 @@ class MessageRenderer(QtCore.QThread):
             if self._message.is_tweet():
                 body = self.MESSAGES["tweet"].format(
                     url_user = "http://twitter.com/{user}".format(user=self._message.tweet["user"]),
-                    user = self._message.tweet["user"], 
+                    user = self._message.tweet["user"],
                     url = self._message.tweet["url"],
                     message = body
                 )
@@ -82,9 +82,9 @@ class MessageRenderer(QtCore.QThread):
             createdFormat = "h:mm ap"
             if created.daysTo(QtCore.QDateTime.currentDateTime()):
                 createdFormat = "MMM d,  {createdFormat}".format(createdFormat=createdFormat)
-            
+
             key = "message"
-            if self._message.is_by_current_user(): 
+            if self._message.is_by_current_user():
                 if self._showTimestamps:
                     key = "message_self"
                 else:
@@ -93,7 +93,7 @@ class MessageRenderer(QtCore.QThread):
                 key = "alert"
             elif not self._showTimestamps:
                 key = "no_time_message"
-            
+
             html = self.MESSAGES[key].format(
                 time = created.toLocalTime().toString(createdFormat),
                 user = self._message.user.name,
@@ -117,7 +117,7 @@ class MessageRenderer(QtCore.QThread):
             'name': response.geturl(),
             'type': headers["Content-Type"]
         }
-        
+
         return self._renderInline(url=response.geturl(), meta=meta)
 
     def _displayUpload(self):
@@ -137,7 +137,7 @@ class MessageRenderer(QtCore.QThread):
         }
 
         return self._renderInline(url=self._message.upload['url'], data=data, meta=meta)
-   
+
     def _renderInline(self, url=None, data=None, meta=None):
         if not url and not data:
             raise Exception("Missing image data")
@@ -158,8 +158,8 @@ class MessageRenderer(QtCore.QThread):
                     name = meta["name"],
                     attribs = attribs
                 )
-           
-        return self._renderInlineLink(meta["url"], meta["name"])
+
+        return self._renderInlineLink(url, meta["name"])
 
     def _renderInlineLink(self, url, name):
         return self.MESSAGES["link"].format(url = url, name = name)
