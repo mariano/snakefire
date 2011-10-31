@@ -92,17 +92,6 @@ For *Arch Linux*, PyOpenSSL is in the extra repository, and can be installed wit
 
 Other OS should read [PyOpenSSL download page] [pyopenssl-download].
 
-#### Notifications ####
-
-For *Ubuntu/Debian based* systems, python-notify is in the official repositores, and can be
-installed the following way:
-
-        $ sudo apt-get install python-notify
-
-For *Arch Linux*, python-notify is in the extra repository, and can be installed with:
-
-        $ pacman -S python-notify
-
 #### Twisted ####
 
 For *Ubuntu/Debian based* systems, Twisted is in the official repositories, and can be
@@ -127,6 +116,42 @@ For *Arch Linux*, Twisted is in the extra repository and can be installed with:
 
 Other OS should refer to the [Twisted download page] [twisted-download] which
 shows how to install Twisted on several platforms. 
+
+#### Notifications ####
+
+For *Ubuntu/Debian based* systems, python-notify is in the official repositores, and can be
+installed the following way:
+
+        $ sudo apt-get install python-notify
+
+For *Arch Linux*, python-notify is in the extra repository, and can be installed with:
+
+        $ pacman -S python-notify
+
+#### Spell checking ####
+
+For *Ubuntu/Debian based* systems, PyEnchant is in the official repositores, and can be
+installed the following way:
+
+        $ sudo apt-get install python-enchant
+
+For *Arch Linux*, PyEnchant is in the community repository, and can be installed with:
+
+        $ pacman -S python2-pyenchant
+
+You now need to install a relevant dictionary.
+
+For *Arch Linux*, search for an aspell dictionary. For example, to install the english
+dictionary:
+
+        $ pacman -S aspell-en
+
+For *Ubuntu/debian based* systems, look for the appropriate aspell dictionary. For example,
+to install the english dictionary:
+
+        $ sudo apt-get install aspell-en
+
+Other OS (such as Mac OSX) should look into [installing PyEnchant and appropriate dictionaries] [pyenchant]
 
 ### Installing Snakefire ###
 
@@ -178,6 +203,7 @@ Snakefire, and do:
 [pyopenssl-download]: http://pypi.python.org/pypi/pyOpenSSL
 [twisted]: http://twistedmatrix.com
 [twisted-download]: http://twistedmatrix.com/trac/wiki/Downloads
+[pyenchant]: http://packages.python.org/pyenchant/tutorial.html#installing-pyenchant
 [twitter_mgiglesias]: http://twitter.com/mgiglesias
 [website_mgiglesias]: http://marianoiglesias.com.ar
 [twitter_madzak]: http://twitter.com/madzak

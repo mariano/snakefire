@@ -3,7 +3,7 @@ from PyQt4 import QtGui
 from PyQt4 import QtWebKit
 
 from renderers import MessageRenderer
-from qtx import ClickableQLabel, IdleTimer, RowPushButton
+from qtx import ClickableQLabel, IdleTimer, RowPushButton, SpellTextEditor
 
 class AboutDialog(QtGui.QDialog):
     def __init__(self, mainFrame):
@@ -270,6 +270,7 @@ class OptionsDialog(QtGui.QDialog):
         }
         programSettings = {
             "minimize": self._minimizeField.isChecked(),
+            "spell_language": self._spellLanguageField.itemData(self._spellLanguageField.currentIndex()).toString(),
             "away": self._awayField.isChecked(),
             "away_time": awayTime if awayTimeOk else 10,
             "away_time_between_messages": awayTimeBetweenMessages if awayTimeBetweenMessagesOk else 5,
@@ -399,17 +400,35 @@ class OptionsDialog(QtGui.QDialog):
 
         # Program group
 
+        spellLanguages = {
+            "": self._mainFrame._("No spell check")
+        }
+
+        if SpellTextEditor.canSpell():
+            for language in SpellTextEditor.languages():
+                spellLanguages[language] = language;
+
         self._connectField = QtGui.QCheckBox(self._mainFrame._("Automatically &connect when program starts"), self)
         self._joinField = QtGui.QCheckBox(self._mainFrame._("&Join last opened channels once connected"), self)
         self._minimizeField = QtGui.QCheckBox(self._mainFrame._("&Minimize to system tray if window is minimized, or closed"), self)
+        self._spellLanguageField = QtGui.QComboBox(self)
+
+        spellLanguageBox = QtGui.QHBoxLayout()
+        spellLanguageBox.addWidget(QtGui.QLabel(self._mainFrame._("Spell checking:"), self))
+        spellLanguageBox.addWidget(self._spellLanguageField)
+        spellLanguageBox.addStretch(1)
 
         programGrid = QtGui.QGridLayout()
         programGrid.addWidget(self._connectField, 1, 0)
         programGrid.addWidget(self._joinField, 2, 0)
         programGrid.addWidget(self._minimizeField, 3, 0)
+        programGrid.addLayout(spellLanguageBox, 4, 0)
 
         programGroupBox = QtGui.QGroupBox(self._mainFrame._("Program settings"))
         programGroupBox.setLayout(programGrid)
+
+        if not SpellTextEditor.canSpell():
+            self._spellLanguageField.setEnabled(False)
 
         # Away group
 
@@ -577,6 +596,19 @@ class OptionsDialog(QtGui.QDialog):
         self._showMessageTimestampsField.setChecked(displaySettings["show_message_timestamps"])
 
         self._setupThemesUI(displaySettings)
+
+        currentIndex = None
+        index = 0
+        spellLanguageKeys = spellLanguages.keys()
+        spellLanguageKeys.sort()
+        for value in spellLanguageKeys:
+            self._spellLanguageField.addItem(spellLanguages[value], value)
+            if value == programSettings["spell_language"]:
+                currentIndex = index
+            index += 1
+
+        if currentIndex is not None:
+            self._spellLanguageField.setCurrentIndex(currentIndex)
 
         currentIndex = None
         index = 0

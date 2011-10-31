@@ -25,7 +25,7 @@ import keyring
 from campfireworker import CampfireWorker
 from dialogs import AboutDialog, AlertsDialog, OptionsDialog
 from renderers import MessageRenderer
-from qtx import ClickableQLabel, IdleTimer, Suggester, SuggesterKeyPressEventFilter, TabWidgetFocusEventFilter
+from qtx import ClickableQLabel, IdleTimer, SpellTextEditor, Suggester, SuggesterKeyPressEventFilter, TabWidgetFocusEventFilter
 from systray import Systray
 
 class Snakefire(object):
@@ -125,6 +125,7 @@ class Snakefire(object):
             },
             "program": {
                 "minimize": False,
+                "spell_language": SpellTextEditor.defaultLanguage(),
                 "away": True,
                 "away_time": 10,
                 "away_time_between_messages": 5,
@@ -235,6 +236,11 @@ class Snakefire(object):
                     self._setUpIdleTracker()
                 else:
                     self._setUpIdleTracker(False)
+                if self._editor:
+                    if settings["spell_language"]:
+                        self._editor.enableSpell(settings["spell_language"])
+                    else:
+                        self._editor.disableSpell()
             elif group == "display":
                 for roomId in self._rooms.keys():
                     if roomId in self._rooms and self._rooms[roomId]["view"]:
@@ -967,7 +973,7 @@ class Snakefire(object):
         self.connect(self._tabs, QtCore.SIGNAL("currentChanged(int)"), self._roomTabFocused)
         self.connect(self._tabs, QtCore.SIGNAL("tabCloseRequested(int)"), self._roomTabClose)
 
-        self._editor = QtGui.QPlainTextEdit()
+        self._editor = SpellTextEditor(lang=self.getSetting("program", "spell_language"), mainFrame=self)
         self._editor.setFixedHeight(self._editor.fontMetrics().height() * 2)
         self._editor.installEventFilter(SuggesterKeyPressEventFilter(self, Suggester(self._editor)))
 

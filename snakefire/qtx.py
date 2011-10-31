@@ -1,5 +1,7 @@
 import ctypes
+import re
 
+from PyQt4 import Qt
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 
@@ -7,6 +9,153 @@ try:
     import pxss
 except:
     pass
+
+try:
+    import enchant
+except ImportError:
+    enchant = None
+
+class SpellTextEditor(Qt.QPlainTextEdit):
+    '''A QTextEdit-based editor that supports syntax highlighting and
+    spellchecking out of the box
+
+    Greatly based on the work of John Schember <john@nachtimwald.com>
+    '''
+
+    def __init__(self, lang=True, mainFrame = None, *args):
+        super(SpellTextEditor, self).__init__(*args)
+        self._mainFrame = mainFrame
+        self._dict = None
+        self._defaultDict = None
+        self._highlighter = None
+        if lang:
+            self.enableSpell(lang)
+
+    @staticmethod
+    def canSpell():
+        can = True if enchant else False
+        if can:
+            try:
+                dict = enchant.Dict()
+            except enchant.DictNotFoundError:
+                can = False
+        return can
+
+    @staticmethod
+    def languages():
+        return enchant.list_languages() if enchant else None
+
+    @staticmethod
+    def defaultLanguage():
+        tag = None
+        if enchant:
+            try:
+                tag = enchant.Dict().tag
+            except enchant.DictNotFoundError:
+                pass
+        return tag
+
+    def enableSpell(self, lang=None):
+        if SpellTextEditor.canSpell():
+            if lang:
+                self._dict = enchant.Dict(lang)
+            else:
+                self._dict = enchant.Dict()
+        else:
+            self._dict = None
+
+        self._highlighter = SpellHighlighter(self.document())
+        if self._dict:
+            self._highlighter.setDict(self._dict)
+            self._highlighter.rehighlight()
+
+    def disableSpell(self):
+        self._dict = None
+        if self._highlighter:
+            self._highlighter.setDocument(None)
+
+    def mousePressEvent(self, event):
+        if event.button() == QtCore.Qt.RightButton:
+            # Rewrite the mouse event to a left button event so the cursor is
+            # moved to the location of the pointer.
+            event = Qt.QMouseEvent(Qt.QEvent.MouseButtonPress, event.pos(),
+                QtCore.Qt.LeftButton, QtCore.Qt.LeftButton, QtCore.Qt.NoModifier)
+        super(SpellTextEditor, self).mousePressEvent(event)
+
+    def contextMenuEvent(self, event):
+        popup_menu = self.createStandardContextMenu()
+
+        cursor = self.textCursor()
+        cursor.select(Qt.QTextCursor.WordUnderCursor)
+        self.setTextCursor(cursor)
+
+        # Check if the selected word is misspelled and offer spelling
+        # suggestions if it is.
+        if enchant and self._dict:
+            if self.textCursor().hasSelection():
+                text = unicode(self.textCursor().selectedText())
+                if not self._dict.check(text):
+                    spell_menu = Qt.QMenu(self._mainFrame._('Spelling Suggestions') if self._mainFrame else QtCore.QCoreApplication.translate('app', 'Spelling Suggestions'), self)
+                    for word in self._dict.suggest(text):
+                        action = SpellAction(word, spell_menu)
+                        action.correct.connect(self.correctWord)
+                        spell_menu.addAction(action)
+                    # Only add the spelling suggests to the menu if there are
+                    # suggestions.
+                    if len(spell_menu.actions()) != 0:
+                        popup_menu.insertSeparator(popup_menu.actions()[0])
+                        popup_menu.insertMenu(popup_menu.actions()[0], spell_menu)
+
+        popup_menu.exec_(event.globalPos())
+
+    def correctWord(self, word):
+        '''
+        Replaces the selected text with word.
+        '''
+        cursor = self.textCursor()
+        cursor.beginEditBlock()
+
+        cursor.removeSelectedText()
+        cursor.insertText(word)
+
+        cursor.endEditBlock()
+
+class SpellHighlighter(Qt.QSyntaxHighlighter):
+    WORDS = u'(?iu)[\w\']+'
+
+    def __init__(self, *args):
+        super(SpellHighlighter, self).__init__(*args)
+        self.dict = None
+
+    def setDict(self, dict):
+        self.dict = dict
+
+    def highlightBlock(self, text):
+        if not self.dict:
+            return
+
+        text = unicode(text)
+
+        format = Qt.QTextCharFormat()
+        format.setUnderlineColor(QtCore.Qt.red)
+        format.setUnderlineStyle(Qt.QTextCharFormat.DotLine)
+
+        for word_object in re.finditer(self.WORDS, text):
+            if not self.dict.check(word_object.group()):
+                self.setFormat(word_object.start(),
+                    word_object.end() - word_object.start(), format)
+
+class SpellAction(Qt.QAction):
+    '''
+    A special QAction that returns the text in a signal.
+    '''
+
+    correct = QtCore.pyqtSignal(unicode)
+
+    def __init__(self, *args):
+        super(SpellAction, self).__init__(*args)
+        self.triggered.connect(lambda x: self.correct.emit(
+            unicode(self.text())))
 
 class IdleTimer(QtCore.QThread):
     def __init__(self, parent, idleSeconds):
@@ -124,7 +273,7 @@ class Suggester(QtCore.QObject):
         action = self.sender()
         cursor, word, userName, matchPosition = action.data().toPyObject()
         self._replace(cursor, word, userName + (": " if matchPosition == 0 else " "))
-    
+
     def _replace(self, cursor, word, replacement):
         cursor.beginEditBlock()
         for i in range(len(word)):
