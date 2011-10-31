@@ -128,17 +128,6 @@ For *Arch Linux*, Twisted is in the extra repository and can be installed with:
 Other OS should refer to the [Twisted download page] [twisted-download] which
 shows how to install Twisted on several platforms. 
 
-#### Python Imaging Library ####
-
-For *Ubuntu/Debian based* systems, PIL is in the official repositories, and can be
-installed the following way:
-
-        $ sudo apt-get install python-imaging
-
-For *Arch Linux*, PIL is in the extra repository and can be installed with:
-
-        $ pacman -S python-imaging
-
 ### Installing Snakefire ###
 
 #### Running the developer version ####

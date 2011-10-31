@@ -4,6 +4,7 @@ from PyQt4 import QtCore
 from PyQt4 import QtGui
 from PyQt4 import QtWebKit
 
+from renderers import MessageRenderer
 from qtx import ClickableQLabel, IdleTimer, RowPushButton
 
 class AboutDialog(QtGui.QDialog):
@@ -328,17 +329,17 @@ class OptionsDialog(QtGui.QDialog):
         # Load preview content
 
         messages = [
-            self._mainFrame.MESSAGES['join'].format(user='John Doe', room='Snakefire'),
-            self._mainFrame.MESSAGES['message_self'].format(time='3:33 pm', user='John Doe', message='Hey everyone!'),
-            self._mainFrame.MESSAGES['message_self'].format(time='3:33 pm', user='John Doe', message='How are you all doing?'),
-            self._mainFrame.MESSAGES['alert'].format(time='3:34 pm', user='Jane Doe', message='Hi John Doe! Nice to see you here'),
-            self._mainFrame.MESSAGES['tweet'].format(url_user='#', user='@mgiglesias', url='#', message='Hello world from twitter :)'),
-            self._mainFrame.MESSAGES['message_self'].format(time='3:35 pm', user='John Doe', message='Look at this method:'),
-            self._mainFrame.MESSAGES['paste'].format(message='def hello(self):<br />  print "Hello World"'),
-            self._mainFrame.MESSAGES['topic'].format(user='Jane Doe', topic='Testing Snakefire, and loving it'),
-            self._mainFrame.MESSAGES['message'].format(time='3:36 pm', user='Jane Doe', message='Looks good. Now look at this upload:'),
-            self._mainFrame.MESSAGES['message'].format(time='3:36 pm', user='Jane Doe', 
-                message = self._mainFrame.MESSAGES['upload'].format(url='#', name='my_upload.tar.gz')
+            MessageRenderer.MESSAGES['join'].format(user='John Doe', room='Snakefire'),
+            MessageRenderer.MESSAGES['message_self'].format(time='3:33 pm', user='John Doe', message='Hey everyone!'),
+            MessageRenderer.MESSAGES['message_self'].format(time='3:33 pm', user='John Doe', message='How are you all doing?'),
+            MessageRenderer.MESSAGES['alert'].format(time='3:34 pm', user='Jane Doe', message='Hi John Doe! Nice to see you here'),
+            MessageRenderer.MESSAGES['tweet'].format(url_user='#', user='@mgiglesias', url='#', message='Hello world from twitter :)'),
+            MessageRenderer.MESSAGES['message_self'].format(time='3:35 pm', user='John Doe', message='Look at this method:'),
+            MessageRenderer.MESSAGES['paste'].format(message='def hello(self):<br />  print "Hello World"'),
+            MessageRenderer.MESSAGES['topic'].format(user='Jane Doe', topic='Testing Snakefire, and loving it'),
+            MessageRenderer.MESSAGES['message'].format(time='3:36 pm', user='Jane Doe', message='Looks good. Now look at this upload:'),
+            MessageRenderer.MESSAGES['message'].format(time='3:36 pm', user='Jane Doe', 
+                message = MessageRenderer.MESSAGES['upload'].format(url='#', name='my_upload.tar.gz')
             )
         ]
 
@@ -346,8 +347,8 @@ class OptionsDialog(QtGui.QDialog):
         buffer = QtCore.QBuffer()
         if buffer.open(QtCore.QIODevice.WriteOnly) and image.save(buffer, 'PNG'):
             messages.extend([
-                self._mainFrame.MESSAGES['message_self'].format(time='3:38 pm', user='John Doe', message='Look at this image:'),
-                self._mainFrame.MESSAGES['message_self'].format(time='3:38 pm', user='John Doe', message=self._mainFrame.MESSAGES['image'].format(
+                MessageRenderer.MESSAGES['message_self'].format(time='3:38 pm', user='John Doe', message='Look at this image:'),
+                MessageRenderer.MESSAGES['message_self'].format(time='3:38 pm', user='John Doe', message=MessageRenderer.MESSAGES['image'].format(
                     url = '#',
                     type = 'image/png',
                     data = buffer.data().toBase64().data(),
@@ -357,8 +358,8 @@ class OptionsDialog(QtGui.QDialog):
             ])
 
         messages.extend([
-            self._mainFrame.MESSAGES['leave'].format(user='Jane Doe', room='Snakefire'),
-            self._mainFrame.MESSAGES['message_self'].format(time='3:37 pm', user='John Doe', message='I guess I am all alone now :('),
+            MessageRenderer.MESSAGES['leave'].format(user='Jane Doe', room='Snakefire'),
+            MessageRenderer.MESSAGES['message_self'].format(time='3:37 pm', user='John Doe', message='I guess I am all alone now :('),
         ])
 
         self._themePreview.page().mainFrame().setHtml("\n".join(messages))

@@ -1,8 +1,6 @@
-import base64
 import copy
 import datetime
 import os
-import re
 import sys
 import tempfile
 import time
@@ -11,7 +9,6 @@ import webbrowser
 
 from snakefire import GNOME_ENABLED, KDE_ENABLED, XFCE_ENABLED
 
-from PIL import Image
 from PyQt4 import Qt
 from PyQt4 import QtGui
 from PyQt4 import QtCore
@@ -26,9 +23,9 @@ elif GNOME_ENABLED or XFCE_ENABLED:
 
 import keyring
 
-from urlparse import urlparse
 from campfireworker import CampfireWorker
 from dialogs import AboutDialog, AlertsDialog, OptionsDialog
+from renderers import MessageRenderer
 from qtx import ClickableQLabel, IdleTimer, Suggester, SuggesterKeyPressEventFilter, TabWidgetFocusEventFilter
 from systray import Systray
 
@@ -42,21 +39,6 @@ class Snakefire(object):
         "normal": None,
         "new": QtGui.QColor(0, 0, 255),
         "alert": QtGui.QColor(255, 0, 0)
-    }
-    MESSAGES = {
-        "alert": '<div class="alert"><span class="time">[{time}]</span> <span class="author">{user}</span>: {message}</div>',
-        "image": '<span class="upload image"><a href="{url}"><img src="data:image/{type};base64,{data}" title="{name}" {attribs} /></a></span>',
-        "join": '<div class="joined">--&gt; {user} joined {room}</div>',
-        "leave": '<div class="left">&lt;-- {user} has left {room}</div>',
-        "message_self": '<div class="message"><span class="time">[{time}]</span> <span class="author self">{user}</span>: {message}</div>',
-        "no_time_message_self": '<div class="message"><span class="author self">{user}</span>: {message}</div>',
-        "message": '<div class="message"><span class="time">[{time}]</span> <span class="author">{user}</span>: {message}</div>',
-        "no_time_message": '<div class="message"><span class="author">{user}</span>: {message}</div>',
-        "paste": '<div class="paste">{message}</div>',
-        "upload": '<span class="upload"><a href="{url}">{name}</a></span>',
-        "link": '<a href="{url}">{name}</a>',
-        "topic": '<div class="topic">{user} changed topic to <span class="new_topic">{topic}</span></div>',
-        "tweet": '<div class="tweet"><a href="{url_user}">{user}</a> <a href="{url}">tweeted</a>: {message}</div>'
     }
 
     def __init__(self):
@@ -116,7 +98,7 @@ class Snakefire(object):
                         handle = open(str(path))
                         handle.close()
                         files.append(str(path))
-                    except Exception as e:
+                    except:
                         pass
             if len(files) > 1:
                files = []
@@ -484,11 +466,9 @@ class Snakefire(object):
             return
 
         view = self._rooms[room.id]["view"]
-        frame = self._rooms[room.id]["frame"]
-        if not view and frame:
+        if not view:
             return
 
-        notify = True
         alert = False
         alertIsDirectPing = False
 
@@ -496,66 +476,25 @@ class Snakefire(object):
             alertIsDirectPing = (QtCore.QString(message.body).indexOf(QtCore.QRegExp("\\s*\\b{name}\\b".format(name=QtCore.QRegExp.escape(self._worker.getUser().name)), QtCore.Qt.CaseInsensitive)) == 0)
             alert = self.getSetting("alerts", "notify_ping") if alertIsDirectPing else self._matchesAlert(message.body)
 
-        html = None
-        if message.is_joining() and self.getSetting("display", "show_join_message"):
-            html = self.MESSAGES["join"].format(user=message.user.name, room=room.name)
-        elif (message.is_leaving() or message.is_kick()) and self.getSetting("display", "show_join_message"):
-            html = self.MESSAGES["leave"].format(user=message.user.name, room=room.name)
-        elif message.is_text() or message.is_upload():
-            if message.body:
-                body = self._plainTextToHTML(message.tweet["tweet"] if message.is_tweet() else message.body)
+        maximumImageWidth = int(view.size().width() * 0.4) # 40% of viewport
 
-            if message.is_tweet():
-                body = self.MESSAGES["tweet"].format(
-                    url_user = "http://twitter.com/{user}".format(user=message.tweet["user"]),
-                    user = message.tweet["user"], 
-                    url = message.tweet["url"],
-                    message = body
-                )
-            elif message.is_paste():
-                body = self.MESSAGES["paste"].format(message=body)
-            elif message.is_upload():
-                body = self._displayUpload(view, message)
-            elif self._isInlineLink(body):
-                body = self._displayInline(view, body)
-            else:
-                body = self._autoLink(body)
+        renderer = MessageRenderer(self._worker.getApiToken(), maximumImageWidth, room, message, live=live, updateRoom=updateRoom, showTimestamps = self.getSetting("display", "show_message_timestamps"), alert=alert, alertIsDirectPing=alertIsDirectPing, parent=self)
+        self.connect(renderer, QtCore.SIGNAL("render(PyQt_PyObject, PyQt_PyObject, PyQt_PyObject, PyQt_PyObject, PyQt_PyObject, PyQt_PyObject, PyQt_PyObject)"), self._renderMessage)
+        renderer.start()
 
-            created = QtCore.QDateTime(
-                message.created_at.year,
-                message.created_at.month,
-                message.created_at.day,
-                message.created_at.hour,
-                message.created_at.minute,
-                message.created_at.second
-            )
-            created.setTimeSpec(QtCore.Qt.UTC)
+    def _renderMessage(self, html, room, message, live=True, updateRoom=True, alert=False, alertIsDirectPing=False):
+        if (not room.id in self._rooms):
+            return
 
-            createdFormat = "h:mm ap"
-            if created.daysTo(QtCore.QDateTime.currentDateTime()):
-                createdFormat = "MMM d,  {createdFormat}".format(createdFormat=createdFormat)
-            
-            key = "message"
-            if message.is_by_current_user(): 
-                if self.getSetting("display", "show_message_timestamps"):
-                    key = "message_self"
-                else:
-                    key = "no_time_message_self"
-            elif alert:
-                key = "alert"
-            elif not self.getSetting("display", "show_message_timestamps"):
-                key = "no_time_message"
-            
-            html = self.MESSAGES[key].format(
-                time = created.toLocalTime().toString(createdFormat),
-                user = message.user.name,
-                message = body
-            )
-        elif message.is_topic_change():
-            html = self.MESSAGES["topic"].format(user=message.user.name, topic=message.body)
+        frame = self._rooms[room.id]["frame"]
+        view = self._rooms[room.id]["view"]
+        if not frame or not view:
+            return
+
+        if not self.getSetting("display", "show_join_message") and (message.is_joining() or message.is_leaving() or message.is_kick()):
+            return
 
         if html:
-            html = unicode(html)
             currentScrollbarValue = frame.scrollPosition()
             autoScroll = (currentScrollbarValue == frame.scrollBarMaximum(QtCore.Qt.Vertical))
             frame.setHtml(frame.toHtml() + html)
@@ -583,7 +522,7 @@ class Snakefire(object):
             if (not isActiveTab and (alert or notifyInactiveTab)) and self.getSetting("alerts", "notify_blink"):
                 self._trayIcon.alert()
 
-            if live and (((alert and notify) or (not isActiveTab and notifyInactiveTab and message.is_text())) and self.getSetting("alerts", "notify_notify")):
+            if live and ((alert or (not isActiveTab and notifyInactiveTab and message.is_text())) and self.getSetting("alerts", "notify_notify")):
                 self._notify(room, "{} says: {}".format(message.user.name, message.body), message.user)
 
         if updateRoom:
@@ -603,96 +542,6 @@ class Snakefire(object):
                     message = self.getSetting("program", "away_message")
                 ))
 
-    def _displayInline(self, view, message_url):
-        request = urllib2.Request(message_url)
-
-        try:
-            response = urllib2.urlopen(request)
-        except:
-            return self._renderInlineLink(message_url, message_url)
-
-        headers = response.info()
-        data = response.read()
-        meta = {
-            'url': response.geturl(),
-            'name': response.geturl(),
-            'type': headers["Content-Type"]
-        }
-        
-        return self._renderInline(view, data, meta)
-
-
-    def _displayUpload(self, view, message):
-        request = urllib2.Request(message.upload['url'])
-        auth_header = base64.encodestring('{}:{}'.format(self._worker.getApiToken(), 'X')).replace('\n', '')
-        request.add_header("Authorization", "Basic {}".format(auth_header))
-
-        try:
-            response = urllib2.urlopen(request)
-        except:
-            return self._renderInlineLink(message.upload['url'], message.upload['name'])
-        
-        data = response.read()
-        meta = {
-            'url': message.upload['url'],
-            'name': message.upload['name'],
-            'type': message.upload['content_type'],
-        }
-
-        return self._renderInline(view, data, meta)
-   
-    def _renderInline(self, view, data, meta):
-        if self._isImage(meta["type"], meta["name"]):
-            (width, height) = self._loadImage(data, False).size
-            adjustedWidth = self._fitImageToWindow(view, width)
-
-            return self.MESSAGES["image"].format(
-                type = meta["type"],
-                data = base64.encodestring(data),
-                url = meta["url"],
-                name = meta["name"],
-                attribs = "width=\"{width}\" ".format(width=width) if width else ""
-            )
-            
-        return self._renderInlineLink(meta["url"], meta["name"])
-
-    def _renderInlineLink(self, url, name):
-        return self.MESSAGES["link"].format(url = url, name = name)
-
-    def _isImage(self, content_type, name):
-        if content_type.startswith("image/"):
-            return True
-        elif content_type == "application/octet-stream" and re.search(".(gif|jpg|jpeg|png)$", name, re.IGNORECASE):
-            return True
-
-        return False
-
-    def _loadImage(self, image_data, load=True):
-        try:
-            imageFile = tempfile.NamedTemporaryFile('w+b')
-            imageFile.write(image_data)
-            imageFile.flush()
-            image = Image.open(imageFile.name)
-
-            if load:
-                image.load()
-            
-            imageFile.close()
-
-            return image
-        except:
-            pass
-
-    def _fitImageToWindow(self, view, width):
-        try:
-            maximumImageWidth = int(view.size().width() * 0.7) # 70% of viewport
-            if width > maximumImageWidth:
-                width = maximumImageWidth
-        except:
-            pass
-
-        return width
-        
     def _matchesAlert(self, message):
         matches = False
         searchMatches = self.getSettings("matches")
@@ -1226,40 +1075,6 @@ class Snakefire(object):
         if checkable: 
             action.setCheckable(True)
         return action
-
-    def _plainTextToHTML(self, string):
-        return string.replace("<", "&lt;").replace(">", "&gt;").replace("\n", "<br />")
-
-    def _isInlineLink(self, string):
-        try:
-            url = urlparse(string)
-            if url.scheme is not '' and url.netloc is not '':
-                return True
-        except:
-            pass
-
-        return False
-
-    def _autoLink(self, string):
-        urlre = re.compile("(\(?https?://[-A-Za-z0-9+&@#/%?=~_()|!:,.;]*[-A-Za-z0-9+&@#/%=~_()|])(\">|</a>)?")
-        urls = urlre.findall(string)
-        cleanUrls = []
-        for url in urls:
-            if url[1]:
-                continue
-
-            currentUrl = url[0]
-            if currentUrl[0] == '(' and currentUrl[-1] == ')':
-                currentUrl = currentUrl[1:-1]
-
-            if currentUrl in cleanUrls:
-                continue
-
-            cleanUrls.append(currentUrl)
-            string = re.sub("(?<!(=\"|\">))" + re.escape(currentUrl),
-                            "<a href=\"" + currentUrl + "\">" + currentUrl + "</a>",
-                            string)
-        return string
 
     def _(self, string, module=None):
         return str(QtCore.QCoreApplication.translate(module or Snakefire.NAME, string))
