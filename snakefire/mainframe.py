@@ -25,7 +25,7 @@ import keyring
 from campfireworker import CampfireWorker
 from dialogs import AboutDialog, AlertsDialog, OptionsDialog
 from renderers import MessageRenderer
-from qtx import ClickableQLabel, IdleTimer, SpellTextEditor, Suggester, SuggesterKeyPressEventFilter, TabWidgetFocusEventFilter
+from qtx import ClickableQLabel, IdleTimer, SpellTextEditor, TabWidgetFocusEventFilter
 from systray import Systray
 
 class Snakefire(object):
@@ -974,8 +974,6 @@ class Snakefire(object):
         self.connect(self._tabs, QtCore.SIGNAL("tabCloseRequested(int)"), self._roomTabClose)
 
         self._editor = SpellTextEditor(lang=self.getSetting("program", "spell_language"), mainFrame=self)
-        self._editor.setFixedHeight(self._editor.fontMetrics().height() * 2)
-        self._editor.installEventFilter(SuggesterKeyPressEventFilter(self, Suggester(self._editor)))
 
         speakButton = QtGui.QPushButton(self._("&Send"))
         self.connect(speakButton, QtCore.SIGNAL('clicked()'), self.speak)

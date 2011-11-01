@@ -21,6 +21,8 @@ class SpellTextEditor(Qt.QPlainTextEdit):
 
     Greatly based on the work of John Schember <john@nachtimwald.com>
     '''
+    MINIMUM_VIEWABLE_LINES = 2
+    MAXIMUM_VIEWABLE_LINES = 8
 
     def __init__(self, lang=True, mainFrame = None, *args):
         super(SpellTextEditor, self).__init__(*args)
@@ -30,6 +32,9 @@ class SpellTextEditor(Qt.QPlainTextEdit):
         self._highlighter = None
         if lang:
             self.enableSpell(lang)
+        self.setFixedHeight(self.fontMetrics().height() * self.MINIMUM_VIEWABLE_LINES)
+        self.installEventFilter(EditorKeyPressEventFilter(mainFrame, self))
+        self.connect(self, QtCore.SIGNAL('textChanged()'), self._onTextChanged)
 
     @staticmethod
     def canSpell():
@@ -119,6 +124,14 @@ class SpellTextEditor(Qt.QPlainTextEdit):
         cursor.insertText(word)
 
         cursor.endEditBlock()
+
+    def _onTextChanged(self):
+        text = self.document().toPlainText()
+        viewableLines = self.height() / self.fontMetrics().height()
+        hasNewLine = text.indexOf("\n") > 0
+        if (hasNewLine and viewableLines < self.MAXIMUM_VIEWABLE_LINES) or (not hasNewLine and viewableLines > self.MINIMUM_VIEWABLE_LINES):
+            viewableLines = self.MAXIMUM_VIEWABLE_LINES if hasNewLine else self.MINIMUM_VIEWABLE_LINES
+            self.setFixedHeight(self.fontMetrics().height() * viewableLines)
 
 class SpellHighlighter(Qt.QSyntaxHighlighter):
     WORDS = u'(?iu)[\w\']+'
@@ -281,22 +294,24 @@ class Suggester(QtCore.QObject):
         cursor.insertText(replacement)
         cursor.endEditBlock()
 
-class SuggesterKeyPressEventFilter(QtCore.QObject):
-    def __init__(self, mainFrame, suggester):
-        super(SuggesterKeyPressEventFilter, self).__init__(mainFrame)
+class EditorKeyPressEventFilter(QtCore.QObject):
+    def __init__(self, mainFrame, editor):
+        super(EditorKeyPressEventFilter, self).__init__(mainFrame)
         self._mainFrame = mainFrame
-        self._suggester = suggester
+        self._editor = editor
+        self._suggester = Suggester(self._editor)
 
     def eventFilter(self, widget, event):
         if event.type() == QtCore.QEvent.KeyPress:
             key = event.key()
-            if key in [QtCore.Qt.Key_Tab, QtCore.Qt.Key_Enter, QtCore.Qt.Key_Return]:
-                if key in [QtCore.Qt.Key_Enter, QtCore.Qt.Key_Return]:
-                    self._mainFrame.speak()
-                elif key == QtCore.Qt.Key_Tab:
-                    self._suggester.setRoom(self._mainFrame.getCurrentRoom())
-                    if self._suggester.suggest() == False:
-                        return False
+            if key == QtCore.Qt.Key_Tab:
+                self._suggester.setRoom(self._mainFrame.getCurrentRoom())
+                if self._suggester.suggest() != False:
+                    return True
+            elif key in [QtCore.Qt.Key_Enter, QtCore.Qt.Key_Return]:
+                if event.modifiers() & QtCore.Qt.ShiftModifier:
+                    return False
+                self._mainFrame.speak()
                 return True
         return False
 
