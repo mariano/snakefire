@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Version=1.0.3
+Encoding=UTF-8
+Name=Snakefire
+GenericName=Campfire client
+Exec=snakefire %U
+Comment=Snakefire - A Linux desktop client for Campfire
+Icon=cricava-snakefire
+X-KDE-Protocols=snakefire
+Terminal=false
+Categories=Chat;Network;Development

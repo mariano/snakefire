@@ -155,6 +155,11 @@ Other OS (such as Mac OSX) should look into [installing PyEnchant and appropriat
 
 ### Installing Snakefire ###
 
+From the path where you have downloaded Snakefire, as root user, do (if you run *Arch Linux*, change 
+the python to python2):
+
+        $ python setup.py install
+
 #### Running the developer version ####
 
 If you wish to run the latest version of Snakefire, without having to
@@ -183,13 +188,7 @@ install the requirements):
 You are now ready to run Snakefire. Enter the directory where you installed
 Snakefire, and do:
 
-	For *Arch Linux*, you have to use python2:
-
-		$ python2 snakefire.py
-
-	For other OS, do:
-
-		$ python snakefire.py
+        $ PYTHONPATH=".:snakefire/" bin/snakefire
 
 [license]: http://www.opensource.org/licenses/mit-license.php
 [pyqt-download]: http://www.riverbankcomputing.co.uk/software/pyqt/download
