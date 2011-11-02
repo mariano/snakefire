@@ -51,7 +51,7 @@ if sys.platform.find("linux") == 0:
         from PyKDE4 import kdecore
 
     class AppInstall(command.install.install):
-        def _KDECreateNotifyRc(self, name):
+        def _KDECreateNotifyRc(self):
             print "Installing notification resources..."
             path = os.path.join(str(kdecore.KGlobal.dirs().localkdedir()), "share", "apps", self.distribution.get_name())
             if not os.path.isdir(path):
