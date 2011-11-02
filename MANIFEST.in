@@ -1,0 +1,4 @@
+include *.markdown
+include LICENSE
+recursive-include resources snakefire.png
+include packaging/linux/*

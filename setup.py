@@ -7,25 +7,25 @@ Setup file largely inspired by http://gitorious.org/smewt/smewt/blobs/master/set
 import os, sys
 from setuptools import find_packages, setup
 
-name="Snakefire"
-args = dict(name=name,
+args = dict(name="snakefire",
     version="1.0.3",
     description="A Campfire Desktop client for Linux",
-    long_description="""Snakefire is a Linux desktop client for Campfire.""",
+    long_description="""\
+Snakefire is a desktop client for Campfire that can run on Linux, and any other
+OS that has QT support.""",
     classifiers=[
-        "Intended Audience :: Developers",
+        "Intended Audience :: End Users/Desktop",
         "License :: OSI Approved :: MIT License",
         "Natural Language :: English",
         "Programming Language :: Python",
-        "Topic :: Internet :: WWW/HTTP",
-        "Topic :: Software Development :: Libraries :: Python Modules"
+        "Topic :: Communications :: Chat"
     ],
     keywords='linux campfire chat desktop client',
     author='Mariano Iglesias',
+    author_email='mgiglesias@gmail.com',
     url='http://snakefire.org',
     license='MIT',
     include_package_data=True,
-    zip_safe=True,
     packages=find_packages(exclude = [ 'ez_setup', 'examples', 'tests', 'utils' ]),
     install_requires=[
         "pyfire>=0.3.4",
@@ -53,7 +53,7 @@ if sys.platform.find("linux") == 0:
     class AppInstall(command.install.install):
         def _KDECreateNotifyRc(self):
             print "Installing notification resources..."
-            path = os.path.join(str(kdecore.KGlobal.dirs().localkdedir()), "share", "apps", self.distribution.get_name())
+            path = os.path.join(str(kdecore.KGlobal.dirs().localkdedir()), "share", "apps", "Snakefire")
             if not os.path.isdir(path):
                 os.makedirs(path)
             with open("packaging/linux/Snakefire.notifyrc", "r") as i:
@@ -72,6 +72,7 @@ if sys.platform.find("linux") == 0:
 
         def run(self):
             command.install.install.run(self)
+
             if os.geteuid() == 0:
                 python2 = False
                 try:
@@ -81,10 +82,7 @@ if sys.platform.find("linux") == 0:
                     pass
 
                 if python2:
-                    easy_install = self.distribution.get_command_class('easy_install')
-                    cmd = easy_install(self.distribution, args="x", root=self.root, record=self.record)
-                    cmd.ensure_finalized()
-                    self._fixPythonBin(os.path.join(cmd.script_dir, "snakefire"))
+                    self._fixPythonBin(os.path.join(self.install_scripts, "snakefire"))
 
                 if kde:
                     self._KDECreateNotifyRc()
