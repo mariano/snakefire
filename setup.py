@@ -7,10 +7,6 @@ Setup file largely inspired by http://gitorious.org/smewt/smewt/blobs/master/set
 import os, sys
 from setuptools import find_packages, setup
 
-required = [
-    "pyfire>=0.3.3"
-]
-
 name="Snakefire"
 args = dict(name=name,
     version="1.0.3",
@@ -31,7 +27,12 @@ args = dict(name=name,
     include_package_data=True,
     zip_safe=True,
     packages=find_packages(exclude = [ 'ez_setup', 'examples', 'tests', 'utils' ]),
-    install_requires=required,
+    install_requires=[
+        "pyfire>=0.3.4",
+        "pyqt",
+        "keyring",
+        "pyenchant"
+    ],
     scripts=["bin/snakefire"]
 )
 
