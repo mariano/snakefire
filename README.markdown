@@ -13,7 +13,7 @@ Snakefire is released under the [MIT License] [license].
 
 ### Requirements ###
 
-### Python Setup Tools ###.
+### Python Setup Tools ###
 
 For *Ubuntu/Debian based* systems, Python setup tools is in the official repositories, 
 and can be installed the following way:
