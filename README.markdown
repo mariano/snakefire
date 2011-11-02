@@ -147,11 +147,6 @@ install the requirements):
 		$ git clone git://github.com/mariano/snakefire
 		$ cd snakefire
 
-   You can keep up with the latest updates by accessing the directory where
-   you installed Snakefire, and running:
-
-		$ git pull --rebase
-
 2. If you are on *KDE*, install the notify configuration to your home directory
    by running the following commands from the directory where you installed
    Snakefire:
@@ -161,10 +156,15 @@ install the requirements):
 		$ cp resources/*.notifyrc $KDE_LOCAL_PREFIX/share/apps/Snakefire
 		$ killall knotify4
 
-You are now ready to run Snakefire. Enter the directory where you installed
+3. You are now ready to run Snakefire. Enter the directory where you installed
 Snakefire, and do:
 
         $ PYTHONPATH=".:snakefire/" bin/snakefire
+
+You can keep up with the latest updates by accessing the directory where
+you installed Snakefire, and running:
+
+		$ git pull --rebase
 
 [license]: http://www.opensource.org/licenses/mit-license.php
 [python-setuptools]: http://pypi.python.org/pypi/setuptools
