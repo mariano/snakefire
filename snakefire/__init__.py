@@ -1,5 +1,4 @@
-import os
-import resources
+import os, resources, subprocess
 
 GNOME_ENABLED = os.getenv("GNOME_DESKTOP_SESSION_ID")
 XFCE_ENABLED = os.getenv("XDG_SESSION_COOKIE")
