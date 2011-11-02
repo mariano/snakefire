@@ -1,9 +1,16 @@
 import os
 import resources
 
-KDE_ENABLED = os.getenv("KDE_FULL_SESSION")
 GNOME_ENABLED = os.getenv("GNOME_DESKTOP_SESSION_ID")
 XFCE_ENABLED = os.getenv("XDG_SESSION_COOKIE")
+KDE_ENABLED = False
+
+try:
+    subprocess.Popen(["kcheckrunning"]).wait()
+    KDE_ENABLED = True
+except OSError:
+    pass
+
 
 if KDE_ENABLED:
     from .mainframe import KSnakefire as Snakefire

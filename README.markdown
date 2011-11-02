@@ -13,6 +13,20 @@ Snakefire is released under the [MIT License] [license].
 
 ### Requirements ###
 
+### Python Setup Tools ###.
+
+For *Ubuntu/Debian based* systems, Python setup tools is in the official repositories, 
+and can be installed the following way:
+
+		$ sudo apt-get install python-setuptools
+
+For *Arch Linux*, Python setup tools is in the extra repository, and can be installed 
+with:
+
+		$ pacman -S python2-distribute
+
+Other OS should refer to the [Python setup tools page] [python-setuptools]
+
 ### Pyfire ###
 
 [Pyfire] [pyfire] is required.
@@ -153,6 +167,7 @@ Snakefire, and do:
         $ PYTHONPATH=".:snakefire/" bin/snakefire
 
 [license]: http://www.opensource.org/licenses/mit-license.php
+[python-setuptools]: http://pypi.python.org/pypi/setuptools
 [pyqt-download]: http://www.riverbankcomputing.co.uk/software/pyqt/download
 [pyfire]: http://github.com/mariano/pyfire
 [pyfire-readme]: http://github.com/mariano/pyfire#readme

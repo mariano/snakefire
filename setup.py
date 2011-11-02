@@ -40,7 +40,14 @@ if sys.platform.find("linux") == 0:
     import re, subprocess
     from setuptools import command
 
-    if os.getenv("KDE_FULL_SESSION"):
+    kde = False
+    try:
+        subprocess.Popen(["kcheckrunning"]).wait()
+        kde = True
+    except OSError:
+        pass
+
+    if kde:
         from PyKDE4 import kdecore
 
     class AppInstall(command.install.install):
@@ -79,7 +86,7 @@ if sys.platform.find("linux") == 0:
                     cmd.ensure_finalized()
                     self._fixPythonBin(os.path.join(cmd.script_dir, "snakefire"))
 
-                if os.getenv("KDE_FULL_SESSION"):
+                if kde:
                     self._KDECreateNotifyRc()
 
                 subprocess.call(['xdg-desktop-menu', 'install', 'packaging/linux/cricava-snakefire.desktop'])
