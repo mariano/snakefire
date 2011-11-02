@@ -153,7 +153,7 @@ install the requirements):
 
 		$ export KDE_LOCAL_PREFIX=`kde4-config --localprefix`
 		$ mkdir -p $KDE_LOCAL_PREFIX/share/apps/Snakefire
-		$ cp resources/*.notifyrc $KDE_LOCAL_PREFIX/share/apps/Snakefire
+		$ cp packaging/linux/*.notifyrc $KDE_LOCAL_PREFIX/share/apps/Snakefire
 		$ killall knotify4
 
 3. You are now ready to run Snakefire. Enter the directory where you installed
