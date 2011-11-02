@@ -56,8 +56,8 @@ if sys.platform.find("linux") == 0:
             path = os.path.join(str(kdecore.KGlobal.dirs().localkdedir()), "share", "apps", self.distribution.get_name())
             if not os.path.isdir(path):
                 os.makedirs(path)
-            with open("packaging/linux/snakefire.notifyrc", "r") as i:
-                with open(os.path.join(path, "snakefire.notifyrc"), "w") as o:
+            with open("packaging/linux/Snakefire.notifyrc", "r") as i:
+                with open(os.path.join(path, "Snakefire.notifyrc"), "w") as o:
                     o.write(i.read())
                     o.close()
                 i.close()
