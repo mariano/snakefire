@@ -87,8 +87,8 @@ if sys.platform.find("linux") == 0:
                 if kde:
                     self._KDECreateNotifyRc()
 
-                subprocess.call(['xdg-desktop-menu', 'install', 'packaging/linux/cricava-snakefire.desktop'])
-                subprocess.call(['xdg-icon-resource', 'install', '--size', '128', 'resources/snakefire.png', 'cricava-snakefire'])
+                subprocess.call(['xdg-desktop-menu', 'install', '--mode', 'user', 'packaging/linux/cricava-snakefire.desktop'])
+                subprocess.call(['xdg-icon-resource', 'install', '--mode', 'user', '--size', '128', 'resources/snakefire.png', 'cricava-snakefire'])
                 if os.path.exists('/usr/bin/update-menus'):
                     subprocess.call(['update-menus'])
                 elif os.path.exists('/usr/bin/update-desktop-database'):
