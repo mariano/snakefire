@@ -1,4 +1,4 @@
 include *.markdown
 include LICENSE
-recursive-include resources snakefire.png
+recursive-include resources/icons *.png
 include packaging/linux/*
