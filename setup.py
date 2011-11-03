@@ -109,8 +109,9 @@ if sys.platform.find("linux") == 0:
                 print "Adding program icon and menu item in {mode} mode".format(mode=menu_mode)
 
                 subprocess.call(['xdg-desktop-menu', 'install', '--mode', menu_mode, 'packaging/linux/cricava-snakefire.desktop'])
-                subprocess.call(['xdg-icon-resource', 'install', '--mode', menu_mode, '--size', '128', 'resources/icons/snakefire-128.png', 'cricava-snakefire'])
-                subprocess.call(['xdg-icon-resource', 'install', '--mode', menu_mode, '--size', '64', 'resources/icons/snakefire-64.png', 'cricava-snakefire'])
+
+                for size in [16, 22, 32, 48, 64, 128]:
+                    subprocess.call(['xdg-icon-resource', 'install', '--mode', menu_mode, '--size', str(size), 'resources/icons/snakefire-{size}.png'.format(size=size), 'cricava-snakefire'])
 
                 if self._binExists('update-menus'):
                     subprocess.call(['update-menus'])
