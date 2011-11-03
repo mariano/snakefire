@@ -50,7 +50,26 @@ if sys.platform.find("linux") == 0:
     if kde:
         from PyKDE4 import kdecore
 
-    class AppInstall(command.install.install):
+    class SnakefireInstall(command.install.install):
+        user_options = command.install.install.user_options + [
+            ('install-menu-in-user-mode', None, 'Run xdg-desktop-menu and xdg-icon-resource in user mode')
+        ]
+        boolean_options = command.install.install.boolean_options + [
+            'install-menu-in-user-mode'
+        ]
+
+        def initialize_options(self):
+            command.install.install.initialize_options(self)
+            self.install_menu_in_user_mode = None
+
+        def _binExists(self, bin):
+            try:
+                subprocess.check_output(['which', bin], stderr=subprocess.STDOUT)
+                return True
+            except subprocess.CalledProcessError:
+                pass
+            return False
+
         def _KDECreateNotifyRc(self):
             print "Installing notification resources..."
             path = os.path.join(str(kdecore.KGlobal.dirs().localkdedir()), "share", "apps", "Snakefire")
@@ -74,28 +93,31 @@ if sys.platform.find("linux") == 0:
             command.install.install.run(self)
 
             if os.geteuid() == 0:
-                python2 = False
-                try:
-                    subprocess.check_output(['which', 'python2'], stderr=subprocess.STDOUT)
-                    python2 = True
-                except subprocess.CalledProcessError:
-                    pass
-
-                if python2:
+                if self._binExists('python2'):
                     self._fixPythonBin(os.path.join(self.install_scripts, "snakefire"))
 
-                if kde:
-                    self._KDECreateNotifyRc()
+            if kde:
+                self._KDECreateNotifyRc()
 
-                subprocess.call(['xdg-desktop-menu', 'install', '--mode', 'user', 'packaging/linux/cricava-snakefire.desktop'])
-                subprocess.call(['xdg-icon-resource', 'install', '--mode', 'user', '--size', '128', 'resources/snakefire.png', 'cricava-snakefire'])
-                if os.path.exists('/usr/bin/update-menus'):
+            menu_mode = None
+            if self.install_menu_in_user_mode:
+                menu_mode = 'user'
+            elif os.geteuid() == 0:
+                menu_mode = 'system'
+
+            if menu_mode:
+                print "Adding program icon and menu item in {mode} mode".format(mode=menu_mode)
+
+                subprocess.call(['xdg-desktop-menu', 'install', '--mode', menu_mode, 'packaging/linux/cricava-snakefire.desktop'])
+                subprocess.call(['xdg-icon-resource', 'install', '--mode', menu_mode, '--size', '128', 'resources/snakefire.png', 'cricava-snakefire'])
+
+                if self._binExists('update-menus'):
                     subprocess.call(['update-menus'])
-                elif os.path.exists('/usr/bin/update-desktop-database'):
+                elif self._binExists('update-desktop-database'):
                     subprocess.call(['update-desktop-database'])
 
     args.update(dict(
-        cmdclass = { "install": AppInstall }
+        cmdclass = { "install": SnakefireInstall }
     ))
 
 setup(**args)
