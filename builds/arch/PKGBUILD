@@ -10,7 +10,7 @@ depends=('python2' 'python2-distribute' 'python2-pyqt' 'python-keyring' 'python-
 optdepends=('python-gnomekeyring: For GNOME/XFCE/LXDE users that require notifications' 'python2-pyenchant: For spell checking support')
 makedepends=('python2' 'python2-distribute')
 source=(http://snakefire.org/downloads/$pkgname-${pkgver//_/-}.tar.gz)
-md5sums=('691e1697ea93097dc65e0d1193102533')
+md5sums=('cde336e6a832f264c6a6625bd90b89ad')
 
 build() {
     cd "$srcdir/$pkgname-$pkgver"

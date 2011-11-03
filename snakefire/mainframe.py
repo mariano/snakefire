@@ -50,7 +50,12 @@ class Snakefire(object):
         self._settings = {}
         self._canConnect = False
         self._cfDisconnected()
-        self._qsettings = QtCore.QSettings()
+
+        if len(sys.argv) > 1:
+            self._qsettings = QtCore.QSettings(sys.argv[1], QtCore.QSettings.IniFormat if sys.platform.find("win") == 0 else QtCore.QSettings.NativeFormat)
+        else:
+            self._qsettings = QtCore.QSettings(self.NAME, self.NAME)
+
         self._icon = QtGui.QIcon(":/icons/{icon}".format(icon=self.ICON))
         self.setWindowIcon(self._icon)
         self.setAcceptDrops(True)
