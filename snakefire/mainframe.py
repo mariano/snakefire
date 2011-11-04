@@ -929,7 +929,6 @@ class Snakefire(object):
         leftFrameLayout.addWidget(uploadWidget)
 
         rightFrameLayout = QtGui.QVBoxLayout()
-        rightFrameLayout.addWidget(QtGui.QLabel(self._("Users in room:")))
         rightFrameLayout.addWidget(usersList)
         rightFrameLayout.addWidget(filesLabel)
         rightFrameLayout.addWidget(uploadButton)

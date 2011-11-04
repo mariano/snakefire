@@ -21,7 +21,7 @@ class SpellTextEditor(Qt.QPlainTextEdit):
 
     Greatly based on the work of John Schember <john@nachtimwald.com>
     '''
-    MINIMUM_VIEWABLE_LINES = 2
+    MINIMUM_VIEWABLE_LINES = 3
     MAXIMUM_VIEWABLE_LINES = 8
 
     def __init__(self, lang=True, mainFrame = None, *args):
