@@ -32,6 +32,11 @@ and can be installed the following way:
 
 		$ sudo apt-get install python-setuptools
 
+For *Fedora*, Python setup tools is in the official repositories and can be installed 
+the following way:
+
+		$ yum install python-setuptools
+
 For *Arch Linux*, Python setup tools is in the extra repository, and can be installed 
 with:
 
@@ -71,6 +76,10 @@ installed the following way:
 
 		$ sudo apt-get install python-qt4
 
+For *Fedora*, PyQT4 is in the official repositories, and can be installed with:
+
+        $ yum install PyQt
+
 For *Arch Linux*, PyQT4 is in the extra repository, and can be installed with:
 
 		$ pacman -S python2-pyqt
@@ -86,6 +95,10 @@ For Ubuntu (GNOME) or Kubuntu (KDE):
 
 		$ sudo apt-get install python-keyring
 
+For *Fedora*, Keyring is in the official repositories, and can be installed with:
+
+        $ yum install python-keyring
+
 For *Arch Linux*, Keyring is in an AUR repository. Install it with yaourt:
 
 		$ yaourt -S python-keyring
@@ -97,6 +110,10 @@ If you are on *GNOME* you also need to install python-gnomekeyring:
 For *Ubuntu/Debian* based systems:
 
         $ sudo apt-get install python-gnomekeyring
+
+For *Fedora* systems:
+
+        $ yum install gnome-python2-gnomekeyring
 
 For *Arch Linux* systems:
 
@@ -111,6 +128,10 @@ installed the following way:
 
         $ sudo apt-get install python-notify
 
+For *Fedora*, python's libnotify is in the official repositories, and can be installed with:
+
+        $ yum install notify-python
+
 For *Arch Linux*, python-notify is in the extra repository, and can be installed with:
 
         $ pacman -S python-notify
@@ -122,6 +143,10 @@ installed the following way:
 
         $ sudo apt-get install python-enchant
 
+For *Fedora*, PyEnchant is in the official repositories, and can be installed with:
+
+        $ yum install python-enchant
+
 For *Arch Linux*, PyEnchant is in the community repository, and can be installed with:
 
         $ pacman -S python2-pyenchant
@@ -132,6 +157,10 @@ For *Ubuntu/debian based* systems, look for the appropriate aspell dictionary. F
 to install the english dictionary:
 
         $ sudo apt-get install aspell-en
+
+For *Fedora*, search for an aspell dictionary. For example, to install the english dictionary:
+
+        $ yum install aspell-en
 
 For *Arch Linux*, search for an aspell dictionary. For example, to install the english
 dictionary:
