@@ -69,8 +69,10 @@ class Snakefire(object):
 
         self._updateLayout()
 
-        if settings["connect"]:
-           self.connectNow()
+        if not self._canConnect:
+            self.options()
+        elif settings["connect"]:
+            self.connectNow()
 
     def showEvent(self, event):
         if self._trayIcon.isVisible():

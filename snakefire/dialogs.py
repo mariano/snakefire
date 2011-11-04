@@ -489,6 +489,7 @@ class OptionsDialog(QtGui.QDialog):
         self._themeField = QtGui.QComboBox(self)
         self._themeSizeField = QtGui.QComboBox(self)
         self._themePreview = QtWebKit.QWebView(self)
+        self._themePreview.setMaximumHeight(300)
 
         themeSelectorBox = QtGui.QHBoxLayout()
         themeSelectorBox.addWidget(QtGui.QLabel(self._mainFrame._("Theme:")))
