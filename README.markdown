@@ -11,6 +11,18 @@ Snakefire is released under the [MIT License] [license].
 
 ## INSTALLATION ##
 
+Some operative systems have a quick install method available. If your system / distribution
+is not listed here, check the MANUAL INSTALLATION section below. 
+
+### Arch Linux ###
+
+Snakefire is in an [AUR repository] [arch-aur-snakefire]. If you have [yaourt] [yaourt],
+you can install it with (if you don't have yaourt, you should really [get it] [yaourt])
+
+        $ yaourt -S snakefire
+
+## MANUAL INSTALLATION ##
+
 ### Requirements ###
 
 ### Python Setup Tools ###
@@ -37,9 +49,8 @@ repository, which must be added to install:
         $ sudo add-apt-repository ppa:zak-d/python-pyfire && sudo apt-get update
         $ sudo apt-get install python-pyfire
 
-For *Arch Linux*, Pyfire is in an AUR repository. If you have [yaourt] [yaourt],
-you can install it with (if you don't have yaourt, you should really 
-[get it] [yaourt]
+For *Arch Linux*, Pyfire is in an [AUR repository] [arch-aur-pyfire]. If you have [yaourt] [yaourt],
+you can install it with (if you don't have yaourt, you should really [get it] [yaourt])
 
 		$ yaourt -S python-pyfire
 
@@ -167,14 +178,16 @@ you installed Snakefire, and running:
 		$ git pull --rebase
 
 [license]: http://www.opensource.org/licenses/mit-license.php
-[python-setuptools]: http://pypi.python.org/pypi/setuptools
-[pyqt-download]: http://www.riverbankcomputing.co.uk/software/pyqt/download
+[yaourt]: http://wiki.archlinux.org/index.php/Yaourt
+[arch-aur-snakefire]: https://aur.archlinux.org/packages.php?ID=53683
+[arch-aur-pyfire]: https://aur.archlinux.org/packages.php?ID=52996
 [pyfire]: http://github.com/mariano/pyfire
 [pyfire-readme]: http://github.com/mariano/pyfire#readme
+[python-setuptools]: http://pypi.python.org/pypi/setuptools
 [pip]: http://pypi.python.org/pypi/pip
 [easy_install]: http://packages.python.org/distribute/easy_install.html
 [zakaria_zajac_ppa]: https://launchpad.net/~zak-d/+archive/python-pyfire
-[yaourt]: http://wiki.archlinux.org/index.php/Yaourt
+[pyqt-download]: http://www.riverbankcomputing.co.uk/software/pyqt/download
 [keyring-install]: http://pypi.python.org/pypi/keyring/#installation-instructions
 [pyenchant]: http://packages.python.org/pyenchant/tutorial.html#installing-pyenchant
 [twitter_mgiglesias]: http://twitter.com/mgiglesias
