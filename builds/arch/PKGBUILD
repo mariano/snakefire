@@ -1,18 +1,23 @@
 # Maintainer: Mariano Iglesias <mgiglesias@gmail.com>
 pkgname=snakefire
 pkgver=1.0.3
-pkgrel=2
+pkgrel=4
 pkgdesc='A Campfire desktop client'
 arch=('i686' 'x86_64' 'ppc')
 url='http://snakefire.org'
 license=('MIT')
-depends=('python2' 'python2-distribute' 'python2-pyqt' 'python-keyring' 'python-notify' 'python-pyfire>=0.3.4')
+depends=('python2' 'python2-pyqt' 'python-keyring' 'python-notify' 'python-pyfire>=0.3.4')
 optdepends=('python-gnomekeyring: For GNOME/XFCE/LXDE users that require notifications' 'python2-pyenchant: For spell checking support')
 makedepends=('python2' 'python2-distribute')
 source=(http://snakefire.org/downloads/$pkgname-$pkgver.tar.gz)
-md5sums=('de44851b4d52f9c7462525abce1298c3')
+md5sums=('bfde48b9dadd77755a01faea63f71062')
 
 build() {
     cd "$srcdir/$pkgname-$pkgver"
-    python2 setup.py install --install-menu-in-user-mode --root="$pkgdir" --optimize=1 || return 1
+    python2 setup.py build || return 1
+}
+
+package() {
+    cd "$srcdir/$pkgname-$pkgver"
+    python2 setup.py install -O1 --skip-build --install-menu-in-user-mode --root="$pkgdir" || return 1
 }

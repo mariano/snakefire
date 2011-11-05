@@ -92,9 +92,8 @@ if sys.platform.find("linux") == 0:
         def run(self):
             command.install.install.run(self)
 
-            if os.geteuid() == 0:
-                if self._binExists('python2'):
-                    self._fixPythonBin(os.path.join(self.install_scripts, "snakefire"))
+            if self._binExists('python2'):
+                self._fixPythonBin(os.path.join(self.install_scripts, "snakefire"))
 
             if kde:
                 self._KDECreateNotifyRc()
