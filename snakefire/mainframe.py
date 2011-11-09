@@ -332,7 +332,7 @@ class Snakefire(object):
             return
 
         self._toolBar["join"].setEnabled(False)
-        self.statusBar().showMessage(self._("Joining room {room}...").format(room=room["name"]))
+        self.statusBar().showMessage(unicode(self._("Joining room {room}...").format(room=room["name"])))
 
         self._rooms[room["id"]] = {
             "room": None,
@@ -373,7 +373,7 @@ class Snakefire(object):
             if handled:
                 return
 
-        self.statusBar().showMessage(self._("Sending message to {room}...").format(room=room.name))
+        self.statusBar().showMessage(unicode(self._("Sending message to {room}...").format(room=room.name)))
         self._getWorker().speak(room, unicode(message))
 
     def command(self, command, args):
@@ -403,7 +403,7 @@ class Snakefire(object):
 
     def leaveRoom(self, roomId):
         if roomId in self._rooms:
-            self.statusBar().showMessage(self._("Leaving room {room}...").format(room=self._rooms[roomId]["room"].name))
+            self.statusBar().showMessage(unicode(self._("Leaving room {room}...").format(room=self._rooms[roomId]["room"].name)))
             self._getWorker().leave(self._rooms[roomId]["room"])
 
     def changeTopic(self):
@@ -412,12 +412,12 @@ class Snakefire(object):
             return
         topic, ok = QtGui.QInputDialog.getText(self,
             self._("Change topic"),
-            self._("Enter new topic for room {room}").format(room=room.name),
+            unicode(self._("Enter new topic for room {room}").format(room=room.name)),
             QtGui.QLineEdit.Normal,
             room.topic
         )
         if ok:
-            self.statusBar().showMessage(self._("Changing topic for room {room}...").format(room=room.name))
+            self.statusBar().showMessage(unicode(self._("Changing topic for room {room}...").format(room=room.name)))
             self._getWorker().changeTopic(room, topic)
 
     def updateRoomUsers(self, roomId = None, pinging = False):
@@ -427,7 +427,7 @@ class Snakefire(object):
                 roomId = room.id
         if roomId in self._rooms:
             if not pinging:
-                self.statusBar().showMessage(self._("Getting users in {room}...").format(room=self._rooms[roomId]["room"].name))
+                self.statusBar().showMessage(unicode(self._("Getting users in {room}...").format(room=self._rooms[roomId]["room"].name)))
             self._getWorker().users(self._rooms[roomId]["room"], pinging)
 
     def updateRoomUploads(self, roomId = None):
@@ -436,7 +436,7 @@ class Snakefire(object):
             if room:
                 roomId = room.id
         if roomId in self._rooms:
-            self.statusBar().showMessage(self._("Getting uploads from {room}...").format(room=self._rooms[roomId]["room"].name))
+            self.statusBar().showMessage(unicode(self._("Getting uploads from {room}...").format(room=self._rooms[roomId]["room"].name)))
             self._getWorker().uploads(self._rooms[roomId]["room"])
 
     def getCurrentRoom(self):
@@ -538,7 +538,7 @@ class Snakefire(object):
                 self._rooms[room.id]["newMessages"] += 1
 
             if self._rooms[room.id]["newMessages"] > 0:
-                tabBar.setTabText(tabIndex, "{room} ({count})".format(room = room.name, count = self._rooms[room.id]["newMessages"]))
+                tabBar.setTabText(tabIndex, unicode("{room} ({count})".format(room = room.name, count = self._rooms[room.id]["newMessages"])))
 
             if not isActiveTab and (alert or self._rooms[room.id]["newMessages"] > 0) and tabBar.tabTextColor(tabIndex) == self.COLORS["normal"]:
                 tabBar.setTabTextColor(tabIndex, self.COLORS["alert" if alert else "new"])
@@ -549,7 +549,7 @@ class Snakefire(object):
                 self._trayIcon.alert()
 
             if live and ((alert or (not isActiveTab and notifyInactiveTab and message.is_text())) and self.getSetting("alerts", "notify_notify")):
-                self._notify(room, "{} says: {}".format(message.user.name, message.body), message.user)
+                self._notify(room, unicode("{} says: {}".format(message.user.name, message.body)), message.user)
 
         if updateRoom:
             if (message.is_joining() or message.is_leaving()):
@@ -563,10 +563,10 @@ class Snakefire(object):
         if live and alertIsDirectPing and self.getSetting("program", "away") and self._idle:
             if self._lastIdleAnswer is None or time.time() - self._lastIdleAnswer >= (int(self.getSetting("program", "away_time_between_messages")) * 60):
                 self._lastIdleAnswer = time.time()
-                self._getWorker().speak(room, unicode("{user}: {message}").format(
+                self._getWorker().speak(room, unicode("{user}: {message}".format(
                     user = message.user.name,
                     message = self.getSetting("program", "away_message")
-                ))
+                )))
 
     def _matchesAlert(self, message):
         matches = False
@@ -587,7 +587,7 @@ class Snakefire(object):
         for room in rooms:
             self._toolBar["rooms"].addItem(room["name"], room)
 
-        self.statusBar().showMessage(self._("{user} connected to Campfire").format(user=user.name), 5000)
+        self.statusBar().showMessage(unicode(self._("{user} connected to Campfire").format(user=user.name)), 5000)
         self._updateLayout()
 
         if not self._pingTimer:
@@ -643,7 +643,7 @@ class Snakefire(object):
         self.updateRoomUsers(room.id)
         self.updateRoomUploads(room.id)
         if not rejoined:
-            self.statusBar().showMessage(self._("Joined room {room}").format(room=room.name), 5000)
+            self.statusBar().showMessage(unicode(self._("Joined room {room}").format(room=room.name)), 5000)
         self._updatedRoomsList()
         if not rejoined and messages:
             for message in messages:
@@ -661,7 +661,7 @@ class Snakefire(object):
 
         self._tabs.removeTab(self._rooms[room.id]["tab"])
         del self._rooms[room.id]
-        self.statusBar().showMessage(self._("Left room {room}").format(room=room.name), 5000)
+        self.statusBar().showMessage(unicode(self._("Left room {room}").format(room=room.name)), 5000)
         self._updatedRoomsList()
 
     def _cfRoomUsers(self, room, users, pinging=False):
@@ -692,10 +692,10 @@ class Snakefire(object):
                     url = upload["full_url"],
                     name = upload["name"]
                 )
-            html = "{text}<br />{html}".format(
+            html = unicode("{text}<br />{html}".format(
                 text = self._("Latest uploads:"),
                 html = html
-            )
+            ))
 
             label.setText(html)
             if not label.isVisible():
@@ -747,7 +747,7 @@ class Snakefire(object):
         if isinstance(error, RuntimeError):
             (code, message) = error
             if code == 401:
-                self.statusBar().showMessage(self._("Disconnected from room. Rejoining room {room}...").format(room=room.name), 5000)
+                self.statusBar().showMessage(unicode(self._("Disconnected from room. Rejoining room {room}...").format(room=room.name)), 5000)
                 self._rooms[room.id]["stream"].stop().join()
                 self._getWorker().join(room.id, True)
                 return
@@ -1138,7 +1138,7 @@ if GNOME_ENABLED or XFCE_ENABLED:
             pynotify.init("Snakefire")
 
         def _notify(self, room, message, user):
-            title = "Snakefire Room: {}".format(room.name)
+            title = unicode("Snakefire Room: {}".format(room.name))
             try:
                 request = urllib2.Request(user.avatar_url)
                 image = urllib2.urlopen(request).read()
