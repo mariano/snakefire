@@ -1,7 +1,7 @@
 # Maintainer: Mariano Iglesias <mgiglesias@gmail.com>
 pkgname=snakefire
-pkgver=1.0.3
-pkgrel=4
+pkgver=1.0.4
+pkgrel=1
 pkgdesc='A Campfire desktop client'
 arch=('i686' 'x86_64' 'ppc')
 url='http://snakefire.org'
@@ -10,7 +10,7 @@ depends=('python2' 'python2-pyqt' 'python-keyring' 'python-notify' 'python-pyfir
 optdepends=('python-gnomekeyring: For GNOME/XFCE/LXDE users that require notifications' 'python2-pyenchant: For spell checking support')
 makedepends=('python2' 'python2-distribute')
 source=(http://snakefire.org/downloads/$pkgname-$pkgver.tar.gz)
-md5sums=('bfde48b9dadd77755a01faea63f71062')
+md5sums=('5c4ec05b30cb12091ed5771c678254bd')
 
 build() {
     cd "$srcdir/$pkgname-$pkgver"
