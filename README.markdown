@@ -175,6 +175,10 @@ From the path where you have downloaded Snakefire, as root user, do (if you run 
 the python to python2):
 
         $ python setup.py install
+        
+For *Ubuntu*, better with sudo:
+
+        $ sudo python setup.py install
 
 #### Running the developer version ####
 
