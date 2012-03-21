@@ -59,6 +59,11 @@ you can install it with (if you don't have yaourt, you should really [get it] [y
 
 		$ yaourt -S python-pyfire
 
+For *Fedora*, install Pyfire using Pip, which is in the official repositories
+
+        $ yum install python-pip
+        $ pip-python install pyfire
+
 Other OS may install it through Python's [PIP] [pip]:
 
         $ pip install pyfire
