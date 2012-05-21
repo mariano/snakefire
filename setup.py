@@ -36,6 +36,17 @@ OS that has QT support.""",
     scripts=["bin/snakefire"]
 )
 
+if sys.platform.find("darwin") == 0:
+    mac_args = dict(
+        app=["bin/snakefire"],
+        options={'py2app':{'argv_emulation': True, 'includes':['sip', 'PyQt4', 'PyQt4.QtCore', 'PyQt4.QtGui'],
+                           'excludes': ['PyQt4.QtDesigner',  'PyQt4.QtOpenGL', 'PyQt4.QtScript', 'PyQt4.QtSql', 'PyQt4.QtTest', 'PyQt4.QtWebKit', 'PyQt4.QtXml', 'PyQt4.phonon'],
+                           'iconfile':'packaging/osx/Snakefire.icns'}},
+        setup_requires=['py2app']
+    )
+    args["install_requires"].remove("pyqt")
+    args.update(mac_args)
+
 if sys.platform.find("linux") == 0:
     import re, subprocess
     from setuptools import command

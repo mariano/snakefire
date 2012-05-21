@@ -1,3 +1,7 @@
 *.pyc
 *.swp
-.idea
+
+
+.idea/
+build/
+snakefire.egg-info/
