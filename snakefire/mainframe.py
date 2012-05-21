@@ -1,10 +1,12 @@
 import copy
 import datetime
 import os
+import platform
 import sys
 import tempfile
 import time
 import urllib2
+import enchant
 
 from snakefire import GNOME_ENABLED, KDE_ENABLED, XFCE_ENABLED
 
@@ -34,6 +36,7 @@ class Snakefire(object):
     DESCRIPTION = "Snakefire: Campfire Linux Client"
     VERSION = "1.0.3"
     ICON = "snakefire.png"
+    MAC_TRAY_ICON = "snakefire-gray.png"
     COLORS = {
         "normal": None,
         "new": QtGui.QColor(0, 0, 255),
@@ -57,6 +60,10 @@ class Snakefire(object):
             self._qsettings = QtCore.QSettings(self.NAME, self.NAME)
 
         self._icon = QtGui.QIcon(":/icons/{icon}".format(icon=self.ICON))
+        if platform.system()=="Darwin":
+            self._trayIconIcon = QtGui.QIcon(":/icons/{icon}".format(icon=self.MAC_TRAY_ICON))
+        else:
+            self._trayIconIcon = self._icon
         self.setWindowIcon(self._icon)
         self.setAcceptDrops(True)
         self._setupUI()
@@ -120,6 +127,10 @@ class Snakefire(object):
         self._qsettings.endGroup();
 
     def getSettings(self, group, asString=True, reload=False):
+        try:
+            spell_language = SpellTextEditor.defaultLanguage()
+        except enchant.errors.Error:
+            spell_language = None
         defaults = {
             "connection": {
                 "subdomain": None,
@@ -132,7 +143,7 @@ class Snakefire(object):
             },
             "program": {
                 "minimize": False,
-                "spell_language": SpellTextEditor.defaultLanguage(),
+                "spell_language": spell_language,
                 "away": True,
                 "away_time": 10,
                 "away_time_between_messages": 5,
@@ -1022,7 +1033,7 @@ class Snakefire(object):
         menu.addSeparator()
         menu.addAction(self._menus["file"]["exit"])
 
-        self._trayIcon = Systray(self._icon, self)
+        self._trayIcon = Systray(self._trayIconIcon, self)
         self._trayIcon.setContextMenu(menu)
         self._trayIcon.setToolTip(self.DESCRIPTION)
 

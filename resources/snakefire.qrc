@@ -5,6 +5,7 @@
 </qresource>
 <qresource prefix="/icons">
 	<file>snakefire.png</file>
+	<file>snakefire-gray.png</file>
 	<file>alerts.png</file>
 	<file>connect.png</file>
 	<file>disconnect.png</file>
