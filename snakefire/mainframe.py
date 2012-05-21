@@ -6,6 +6,7 @@ import sys
 import tempfile
 import time
 import urllib2
+import enchant
 
 from snakefire import GNOME_ENABLED, KDE_ENABLED, XFCE_ENABLED
 
@@ -126,6 +127,10 @@ class Snakefire(object):
         self._qsettings.endGroup();
 
     def getSettings(self, group, asString=True, reload=False):
+        try:
+            spell_language = SpellTextEditor.defaultLanguage()
+        except enchant.errors.Error:
+            spell_language = None
         defaults = {
             "connection": {
                 "subdomain": None,
@@ -138,7 +143,7 @@ class Snakefire(object):
             },
             "program": {
                 "minimize": False,
-                "spell_language": SpellTextEditor.defaultLanguage(),
+                "spell_language": spell_language,
                 "away": True,
                 "away_time": 10,
                 "away_time_between_messages": 5,
