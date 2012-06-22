@@ -113,12 +113,16 @@ class MessageRenderer(QtCore.QThread):
             return self._renderInlineLink(message_url, message_url)
 
         headers = response.info()
+        url = message_url
+        if response.getcode == '200':
+            url = response.geturl()
+
         meta = {
-            'name': response.geturl(),
+            'name': url,
             'type': headers["Content-Type"]
         }
 
-        return self._renderInline(url=response.geturl(), meta=meta)
+        return self._renderInline(url=url, meta=meta)
 
     def _displayUpload(self):
         request = urllib2.Request(self._message.upload['url'])
