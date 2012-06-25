@@ -168,7 +168,7 @@ class SpellAction(Qt.QAction):
     def __init__(self, *args):
         super(SpellAction, self).__init__(*args)
         self.triggered.connect(lambda x: self.correct.emit(
-            unicode(self.text())))
+            unicode(self.toolTip())))
 
 class IdleTimer(QtCore.QThread):
     def __init__(self, parent, idleSeconds):
