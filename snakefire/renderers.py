@@ -9,8 +9,8 @@ from urlparse import urlparse
 class MessageRenderer(QtCore.QThread):
     MESSAGES = {
         "alert": '<div class="alert"><span class="time">[{time}]</span> <span class="author">{user}</span>: {message}</div>',
-        "image": '<span class="upload image"><a href="{url}"><img src="data:image/{type};base64,{data}" title="{name}" {attribs} /></a></span>',
-        "image_url": '<span class="upload image"><a href="{url}"><img src="{url}" title="{name}" {attribs} /></a></span>',
+        "image": '<span id="{url}" class="upload image"><a href="{url}"><img src="data:image/{type};base64,{data}" title="{name}" {attribs} /></a></span><input type="button" onClick=\'{js}\' value="Toggle Image" />',
+        "image_url": '<span id="{url}" class="upload image"><a href="{url}"><img src="{url}" title="{name}" {attribs} /></a></span><input id="hide" type=button onClick=\'{js}\' value="Toggle Image" />',
         "join": '<div class="joined">--&gt; {user} joined {room}</div>',
         "leave": '<div class="left">&lt;-- {user} has left {room}</div>',
         "message_self": '<div class="message"><span class="time">[{time}]</span> <span class="author self">{user}</span>: {message}</div>',
@@ -154,6 +154,7 @@ class MessageRenderer(QtCore.QThread):
                     data = base64.encodestring(data),
                     url = url,
                     name = meta["name"],
+                    js = 'if (document.getElementById("'+url+'").style.visibility == "visible") { document.getElementById("'+url+'").style.visibility="hidden"} else {document.getElementById("'+url+'").style.visibility="visible"}',
                     attribs = attribs
                 )
             else:

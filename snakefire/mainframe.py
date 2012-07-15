@@ -895,10 +895,10 @@ class Snakefire(object):
         topicLabel.setToolTip(self._("Click here to change room's topic"))
         topicLabel.setWordWrap(True)
         self.connect(topicLabel, QtCore.SIGNAL("clicked()"), self.changeTopic)
-
         view = SnakeFireWebView(self)
         view.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
         frame = view.page().mainFrame()
+
 
         #Send all link clicks to systems web browser
         view.page().setLinkDelegationPolicy(QtWebKit.QWebPage.DelegateAllLinks)
