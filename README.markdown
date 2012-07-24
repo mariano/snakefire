@@ -16,10 +16,10 @@ is not listed here, check the MANUAL INSTALLATION section below.
 
 ### Arch Linux ###
 
-Snakefire is in an [AUR repository] [arch-aur-snakefire]. If you have [yaourt] [yaourt],
-you can install it with (if you don't have yaourt, you should really [get it] [yaourt])
+Snakefire is in an [AUR repository] [arch-aur-snakefire]. If you have [packer] [packer],
+you can install it with (if you don't have packer, you should really [get it] [packer])
 
-        $ yaourt -S snakefire
+        $ packer -S snakefire
 
 ## MANUAL INSTALLATION ##
 
@@ -54,10 +54,10 @@ repository, which must be added to install:
         $ sudo add-apt-repository ppa:zak-d/python-pyfire && sudo apt-get update
         $ sudo apt-get install python-pyfire
 
-For *Arch Linux*, Pyfire is in an [AUR repository] [arch-aur-pyfire]. If you have [yaourt] [yaourt],
-you can install it with (if you don't have yaourt, you should really [get it] [yaourt])
+For *Arch Linux*, Pyfire is in an [AUR repository] [arch-aur-pyfire]. If you have [packer] [packer],
+you can install it with (if you don't have packer, you should really [get it] [packer])
 
-		$ yaourt -S python-pyfire
+		$ packer -S python-pyfire
 
 For *Fedora*, install Pyfire using Pip, which is in the official repositories
 
@@ -104,9 +104,9 @@ For *Fedora*, Keyring is in the official repositories, and can be installed with
 
         $ yum install python-keyring
 
-For *Arch Linux*, Keyring is in an AUR repository. Install it with yaourt:
+For *Arch Linux*, Keyring is in an AUR repository. Install it with packer:
 
-		$ yaourt -S python-keyring
+		$ packer -S python-keyring
 
 Other OS should read [Python Keyring installation docs] [keyring-install].
 
@@ -216,7 +216,7 @@ you installed Snakefire, and running:
 		$ git pull --rebase
 
 [license]: http://www.opensource.org/licenses/mit-license.php
-[yaourt]: http://wiki.archlinux.org/index.php/Yaourt
+[packer]: https://aur.archlinux.org/packages.php?ID=33378
 [arch-aur-snakefire]: https://aur.archlinux.org/packages.php?ID=53683
 [arch-aur-pyfire]: https://aur.archlinux.org/packages.php?ID=52996
 [pyfire]: http://github.com/mariano/pyfire
