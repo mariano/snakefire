@@ -356,6 +356,8 @@ class OptionsDialog(QtGui.QDialog):
                     type = 'image/png',
                     data = buffer.data().toBase64().data(),
                     name = 'image.png',
+                    url_md5 = '',
+                    js='',
                     attribs = ''
                 ))
             ])
