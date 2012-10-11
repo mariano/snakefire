@@ -18,7 +18,7 @@ class MessageRenderer(QtCore.QThread):
         "no_time_message_self": '<div class="message"><span class="author self">{user}</span>: {message}</div>',
         "message": '<div class="message"><span class="time">[{time}]</span> <span class="author">{user}</span>: {message}</div>',
         "no_time_message": '<div class="message"><span class="author">{user}</span>: {message}</div>',
-        "paste": '<div class="paste">{message}</div>',
+        "paste": '<div class="paste"><pre>{message}</pre></div>',
         "upload": '<span class="upload"><a href="{url}">{name}</a></span>',
         "link": '<a href="{url}">{name}</a>',
         "topic": '<div class="topic">{user} changed topic to <span class="new_topic">{topic}</span></div>',
