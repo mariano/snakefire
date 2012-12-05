@@ -1,7 +1,7 @@
 # Maintainer: Mariano Iglesias <mgiglesias@gmail.com>
 pkgname=snakefire
 pkgver=1.0.4
-pkgrel=1
+pkgrel=2
 pkgdesc='A Campfire desktop client'
 arch=('i686' 'x86_64' 'ppc')
 url='http://snakefire.org'
@@ -14,10 +14,10 @@ md5sums=('5c4ec05b30cb12091ed5771c678254bd')
 
 build() {
     cd "$srcdir/$pkgname-$pkgver"
-    python2 setup.py build || return 1
+    python2 setup.py build
 }
 
 package() {
     cd "$srcdir/$pkgname-$pkgver"
-    python2 setup.py install -O1 --skip-build --install-menu-in-user-mode --root="$pkgdir" || return 1
+    python2 setup.py install -O1 --skip-build --install-menu-in-user-mode --root="$pkgdir"
 }
