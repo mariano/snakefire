@@ -358,7 +358,9 @@ class Snakefire(object):
             "uploadButton": None,
             "uploadLabel": None,
             "uploadWidget": None,
-            "newMessages": 0
+            "newMessages": 0,
+            "currentScrollbarValue": 0,
+            "currentScrollbarMax": 0
         }
         self._getWorker().join(room["id"])
 
@@ -532,14 +534,10 @@ class Snakefire(object):
             return
 
         if html:
-            currentScrollbarValue = frame.scrollPosition()
-            autoScroll = (currentScrollbarValue == frame.scrollBarMaximum(QtCore.Qt.Vertical))
+            self._rooms[room.id]["currentScrollbarValue"] = frame.scrollPosition().y()
+            self._rooms[room.id]["currentScrollbarMax"] = frame.scrollBarMaximum(QtCore.Qt.Vertical)
             frame.setHtml(frame.toHtml() + html)
             view.show()
-            if autoScroll:
-                frame.scroll(0, frame.scrollBarMaximum(QtCore.Qt.Vertical))
-            else:
-                frame.scroll(currentScrollbarValue.x(), currentScrollbarValue.y())
 
             tabIndex = self._rooms[room.id]["tab"]
             tabBar = self._tabs.tabBar()
@@ -902,13 +900,22 @@ class Snakefire(object):
 
         #Send all link clicks to systems web browser
         view.page().setLinkDelegationPolicy(QtWebKit.QWebPage.DelegateAllLinks)
+
+        #Hide reload page context menu
+        view.page().action(QtWebKit.QWebPage.Reload).setVisible(False)
+
         def linkClicked(url):
             QtGui.QDesktopServices.openUrl(url)
         view.connect(view, QtCore.SIGNAL("linkClicked (const QUrl&)"), linkClicked)
 
         # Support auto scroll when needed
         def autoScroll(size):
-            frame.scroll(0, size.height())
+            active_room = self._rooms[room.id]
+            if active_room["currentScrollbarValue"] == active_room["currentScrollbarMax"]:
+                active_room["frame"].scroll(0, size.height())
+            else:
+                active_room["frame"].scroll(0, active_room["currentScrollbarValue"])
+
         frame.connect(frame, QtCore.SIGNAL("contentsSizeChanged (const QSize&)"), autoScroll)
 
         usersList = QtGui.QListWidget()
