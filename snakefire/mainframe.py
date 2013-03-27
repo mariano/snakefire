@@ -558,7 +558,7 @@ class Snakefire(object):
                 self._trayIcon.alert()
 
             if live and ((alert or (not isActiveTab and notifyInactiveTab and message.is_text())) and self.getSetting("alerts", "notify_notify")):
-                self._notify(room, unicode("{} says: {}".format(message.user.name, message.body)), message.user)
+                self._notify(room, unicode(u"{} says: {}".format(message.user.name, message.body)), message.user)
 
         if updateRoom:
             if (message.is_joining() or message.is_leaving()):
