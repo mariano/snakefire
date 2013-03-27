@@ -1186,7 +1186,7 @@ class SnakeFireWebView(QtWebKit.QWebView):
         self.updateTheme()
 
     def updateTheme(self, theme = None, size=None):
-        self.settings().setUserStyleSheetUrl(QtCore.QUrl.fromLocalFile(":/themes/{theme}.css".format(
+        self.settings().setUserStyleSheetUrl(QtCore.QUrl("qrc:/themes/{theme}.css".format(
             theme = theme if theme else self.snakefire.getSetting("display", "theme")
         )))
         self.setTextSizeMultiplier(round(float(size if size else self.snakefire.getSetting("display", "size")) / 100, 1))
