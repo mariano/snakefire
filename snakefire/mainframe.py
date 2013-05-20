@@ -558,7 +558,7 @@ class Snakefire(object):
                 self._trayIcon.alert()
 
             if live and ((alert or (not isActiveTab and notifyInactiveTab and message.is_text())) and self.getSetting("alerts", "notify_notify")):
-                self._notify(room, unicode("{} says: {}".format(message.user.name, message.body)), message.user)
+                self._notify(room, unicode(u"{} says: {}".format(message.user.name, message.body)), message.user)
 
         if updateRoom:
             if (message.is_joining() or message.is_leaving()):
@@ -1186,7 +1186,7 @@ class SnakeFireWebView(QtWebKit.QWebView):
         self.updateTheme()
 
     def updateTheme(self, theme = None, size=None):
-        self.settings().setUserStyleSheetUrl(QtCore.QUrl.fromLocalFile(":/themes/{theme}.css".format(
+        self.settings().setUserStyleSheetUrl(QtCore.QUrl("qrc:/themes/{theme}.css".format(
             theme = theme if theme else self.snakefire.getSetting("display", "theme")
         )))
         self.setTextSizeMultiplier(round(float(size if size else self.snakefire.getSetting("display", "size")) / 100, 1))

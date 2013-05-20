@@ -289,7 +289,7 @@ class OptionsDialog(QtGui.QDialog):
         self._mainFrame.setSettings("display", displaySettings)
 
     def _themeSelected(self):
-        self._themePreview.settings().setUserStyleSheetUrl(QtCore.QUrl.fromLocalFile(":/themes/{theme}.css".format(
+        self._themePreview.settings().setUserStyleSheetUrl(QtCore.QUrl("qrc:/themes/{theme}.css".format(
             theme = self._themeField.itemData(self._themeField.currentIndex()).toString()
         )))
 
