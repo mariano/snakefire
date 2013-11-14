@@ -680,11 +680,17 @@ class Snakefire(object):
 
         if not pinging:
             self.statusBar().clearMessage()
-        self._rooms[room.id]["usersList"].clear()
+
+        user_list = self._rooms[room.id]["usersList"]
+        # First check that we have created the user_list object.
+        if user_list is None:
+            return
+
+        user_list.clear()
         for user in users:
             item = QtGui.QListWidgetItem(user["name"])
             item.setData(QtCore.Qt.UserRole, user)
-            self._rooms[room.id]["usersList"].addItem(item)
+            user_list.addItem(item)
 
     def _cfRoomUploads(self, room, uploads):
         # We may be disconnecting while still processing the list
