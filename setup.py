@@ -8,7 +8,7 @@ import os, sys
 from setuptools import find_packages, setup
 
 args = dict(name="snakefire",
-    version="1.0.4",
+    version="1.0.5",
     description="A Campfire Desktop client for Linux",
     long_description="""\
 Snakefire is a desktop client for Campfire that can run on Linux, and any other
