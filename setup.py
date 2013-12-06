@@ -49,7 +49,7 @@ if sys.platform.find("darwin") == 0:
 
 if sys.platform.find("linux") == 0:
     import re, subprocess
-    from setuptools import command
+    from setuptools.command import install
 
     kde = False
     try:
@@ -61,16 +61,16 @@ if sys.platform.find("linux") == 0:
     if kde:
         from PyKDE4 import kdecore
 
-    class SnakefireInstall(command.install.install):
-        user_options = command.install.install.user_options + [
+    class SnakefireInstall(install.install):
+        user_options = install.install.user_options + [
             ('install-menu-in-user-mode', None, 'Run xdg-desktop-menu and xdg-icon-resource in user mode')
         ]
-        boolean_options = command.install.install.boolean_options + [
+        boolean_options = install.install.boolean_options + [
             'install-menu-in-user-mode'
         ]
 
         def initialize_options(self):
-            command.install.install.initialize_options(self)
+            install.install.initialize_options(self)
             self.install_menu_in_user_mode = None
 
         def _binExists(self, bin):
@@ -101,7 +101,7 @@ if sys.platform.find("linux") == 0:
                 f.close()
 
         def run(self):
-            command.install.install.run(self)
+            install.install.run(self)
 
             if self._binExists('python2'):
                 self._fixPythonBin(os.path.join(self.install_scripts, "snakefire"))
