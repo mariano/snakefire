@@ -8,7 +8,7 @@ import time
 import urllib2
 import enchant
 
-from snakefire import GNOME_ENABLED, KDE_ENABLED, XFCE_ENABLED
+from snakefire import NOTIFICATIONS_ENABLED, KDE_ENABLED
 
 from PyQt4 import Qt
 from PyQt4 import QtGui
@@ -18,7 +18,7 @@ from PyQt4 import QtWebKit
 if KDE_ENABLED:
     from PyKDE4 import kdecore
     from PyKDE4 import kdeui
-elif GNOME_ENABLED or XFCE_ENABLED:
+elif NOTIFICATIONS_ENABLED:
     import subprocess
     import pynotify
 
@@ -1149,7 +1149,7 @@ if KDE_ENABLED:
                 kdeui.KNotification.CloseWhenWidgetActivated
             )
 
-if GNOME_ENABLED or XFCE_ENABLED:
+if NOTIFICATIONS_ENABLED:
     class GSnakefire(QSnakefire):
         def __init__(self, parent=None):
             super(GSnakefire, self).__init__(parent)
