@@ -1,7 +1,7 @@
 # Maintainer: Mariano Iglesias <mgiglesias@gmail.com>
 pkgname=snakefire
 pkgver=1.0.5
-pkgrel=3
+pkgrel=4
 pkgdesc='A Campfire desktop client'
 arch=('i686' 'x86_64' 'ppc')
 url='http://snakefire.org'
