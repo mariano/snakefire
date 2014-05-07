@@ -7,7 +7,7 @@ arch=('i686' 'x86_64' 'ppc')
 url='http://snakefire.org'
 license=('MIT')
 depends=('python2' 'python2-pyqt4' 'python2-keyring' 'python2-notify' 'python-pyfire>=0.3.4', 'python2-dbus')
-optdepends=('python-gnomekeyring: For GNOME/XFCE/LXDE users that require notifications' 'python2-pyenchant: For spell checking support')
+optdepends=('python2-gnomekeyring: For GNOME/XFCE/LXDE users that require notifications' 'python2-pyenchant: For spell checking support')
 makedepends=('python2' 'python2-distribute')
 source=(http://snakefire.org/downloads/$pkgname-$pkgver.tar.gz)
 md5sums=('55d5735d400cd90ba6d1d550fd398681')
