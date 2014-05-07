@@ -680,11 +680,17 @@ class Snakefire(object):
 
         if not pinging:
             self.statusBar().clearMessage()
-        self._rooms[room.id]["usersList"].clear()
+
+        user_list = self._rooms[room.id]["usersList"]
+        # First check that we have created the user_list object.
+        if user_list is None:
+            return
+
+        user_list.clear()
         for user in users:
             item = QtGui.QListWidgetItem(user["name"])
             item.setData(QtCore.Qt.UserRole, user)
-            self._rooms[room.id]["usersList"].addItem(item)
+            user_list.addItem(item)
 
     def _cfRoomUploads(self, room, uploads):
         # We may be disconnecting while still processing the list
@@ -911,10 +917,13 @@ class Snakefire(object):
         # Support auto scroll when needed
         def autoScroll(size):
             active_room = self._rooms[room.id]
+
+            # Use the frame set within the parent method if the frame key hasn't been populated
+            active_room_frame = active_room["frame"] if active_room["frame"] else frame
             if active_room["currentScrollbarValue"] == active_room["currentScrollbarMax"]:
-                active_room["frame"].scroll(0, size.height())
+                active_room_frame.scroll(0, size.height())
             else:
-                active_room["frame"].scroll(0, active_room["currentScrollbarValue"])
+                active_room_frame.scroll(0, active_room["currentScrollbarValue"])
 
         frame.connect(frame, QtCore.SIGNAL("contentsSizeChanged (const QSize&)"), autoScroll)
 
