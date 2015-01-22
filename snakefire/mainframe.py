@@ -136,7 +136,7 @@ class Snakefire(object):
                 "subdomain": None,
                 "user": None,
                 "password": None,
-                "ssl": False,
+                "ssl": True,
                 "connect": False,
                 "join": False,
                 "rooms": []
